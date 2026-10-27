@@ -67,4 +67,6 @@ La ficha estática genérica resuelve el SKU al hidratar: requiere JavaScript y 
 
 [PROJECT.md](PROJECT.md) es la especificación vigente. Lee también [AGENTS.md](AGENTS.md), [docs/CODEX_START.md](docs/CODEX_START.md) y [REQUISITOS_EXTERNOS.md](REQUISITOS_EXTERNOS.md). CP-001 queda intacto; su mención de preview no autoriza despliegue en CP-002.
 
-Rama `cp-002-foundation`. No se hace push, PR ni publicación. Remoto existente sin contactar. Comparte la rama/diff/capturas con el orquestador. CP-003 requiere aprobación explícita antes de iniciar Supabase.
+Rama `cp-002-foundation`, repositorio `andsanchez037/electroshop`. Por autorización del usuario se prepara un commit documental y el push de esta rama para revisión: https://github.com/andsanchez037/electroshop/tree/cp-002-foundation. El resultado del envío se informa al terminar la operación; no equivale a aprobación del checkpoint ni a despliegue del sitio.
+
+`AGENTS.md`, los documentos de `docs/`, los antecedentes CP-001 y `.env.example` con placeholders se incorporan a la entrega versionada. El informe `REVIEW_CP002.md` conserva la auditoría del commit de implementación `bd6574b`; el ZIP local de aquella entrega se excluye de Git y no representa el commit documental posterior. CP-003 requiere aprobación explícita antes de iniciar Supabase.
