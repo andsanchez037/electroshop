@@ -2,15 +2,15 @@
 
 **Última actualización:** 2026-10-26
 
-**Estado general:** CP-002 implementado y verificado localmente, **pendiente de revisión del orquestador**. CP-003 no iniciado.
+**Estado general:** CP-002 **APPROVED / cerrado**, por aprobación técnica del orquestador externo comunicada por el usuario. CP-003 no iniciado; espera autorización explícita.
 
 **Bloqueos inmediatos:** ninguno para desarrollar localmente con los programas necesarios; credenciales Supabase/Netlify NO requeridas en CP-002.
 
 | CP | Estado | Ejecutor | Resultado |
 |---|---|---|---|
 | CP-001 | Archivado | equipo | `index_elec.html` guardado sin uso en producción |
-| CP-002 | **PASS técnico / REVIEW** | Codex | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge |
-| CP-003 | WAITING | Codex | Espera aprobación + Supabase |
+| CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
+| CP-003 | WAITING / NO INICIADO | Codex | Espera autorización explícita + preparación humana de Supabase |
 | CP-004 | WAITING | Codex | Espera admin de prueba |
 | CP-005 | WAITING | Codex | Espera aprobación |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
@@ -93,3 +93,13 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Verificación para este cambio documental: identidad de rama/origin; remoto consultado con ls-remote (main inicial `790e1be698c381978d917c8a6c2f5ab7acbab8dc`, cp-002-foundation ausente antes del envío); comparación de web contra bd6574b; reglas de ignore y revisión de archivos staged/patrones de secretos. Detalles y resultado efectivo del push se reportan al concluir, no se predeclara enviado.
 - No se repiten check/lint/test/build/smoke: todo web permanece idéntico a la fuente ya probada durante la auditoría (14 tests y demás controles PASS); ningún resultado nuevo de npm se afirma para esta tarea.
 - Rama de revisión prevista: https://github.com/andsanchez037/electroshop/tree/cp-002-foundation. Commit documental local creado antes del push, sin reescribir bd6574b. **CP-002 pendiente de aprobación; CP-003 no iniciado.**
+
+### 2026-10-26 — CP-002 / APPROVED — CIERRE FORMAL
+
+- Aprobación técnica del orquestador externo comunicada expresamente por el usuario en esta conversación; se registra el checkpoint como APPROVED y cerrado. El usuario autorizó commit/push documental y PR hacia main, sin merge automático. No se interpreta esta aprobación como autorización para iniciar CP-003.
+- Rama inicial `cp-002-foundation`, HEAD `4ca0292e9264e621ba980b9933e693e87358b568`, árbol limpio e índice vacío. Fuente funcional aprobada `bd6574b4e7cbf81cf8180ce42d7ab34286ca7728`. El commit documental anterior ya se envió a origin satisfactoriamente y se verificó su SHA remoto.
+- Archivos de este cierre: exclusivamente PROJECT.md y docs/ESTADO.md. Se actualizan estado, tabla y siguiente paso; se conserva la bitácora histórica de auditoría y entrega. REVIEW_CP002.md y el ZIP local documentan la entrega anterior y no se regeneran.
+- Limitaciones no bloqueantes: catálogo/ficha requieren JS; SEO social genérico y canonical de producción pendiente; filtros editados sin persistencia en URL; wordmark e ilustraciones de categoría temporales; cobertura automática en Edge a 360/1440 px, sin lector de pantalla ni dispositivo físico; smoke necesita Edge y puerto 4322 libre. Carrito permanece deshabilitado hasta CP-005; no se procesan compras/pagos.
+- Validación de este cierre documental: git status, revisión del índice y diff; solamente los dos documentos autorizados deben estar staged. Comparación de todo web con bd6574b para preservar código, pruebas, configuraciones y lockfile. Comprobación de exclusión del ZIP y entornos reales, búsqueda de patrones comunes de secretos en los documentos. No se repiten pruebas npm: no cambia la aplicación. Los resultados ejecutados en la auditoría siguen siendo instalación/check/lint/14 tests/build/smoke/audit PASS; no se afirma una ejecución nueva.
+- Entrega prevista por esta orden: commit documental en cp-002-foundation y push normal a origin; PR dirigido a main (o URL exacta de comparación si el conector no permite crearlo). El resultado efectivo y el SHA final se reportan tras las operaciones, sin predeclararlos aquí. Sin force push ni merge automático.
+- Preparación para la siguiente fase: documentación vigente actualizada; CP-003 continúa WAITING / NO INICIADO. Requiere nueva autorización y preparación humana según REQUISITOS_EXTERNOS.md. No se crean migraciones, SDK, credenciales ni conexiones externas de CP-003. Esperar la próxima instrucción del usuario/orquestador.
