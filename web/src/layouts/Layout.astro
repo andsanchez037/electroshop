@@ -1,0 +1,48 @@
+---
+import '../styles/global.css';
+interface Props { title: string; description: string }
+const { title, description } = Astro.props;
+const path = Astro.url.pathname;
+---
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#121214" />
+    <meta property="og:title" content={`${title} | Electro Shop`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | Electro Shop</title>
+  </head>
+  <body>
+    <a href="#contenido" class="skip-link">Saltar al contenido</a>
+    <header class="site-header">
+      <div class="demo-banner">PROYECTO ACADÉMICO <span>·</span> DEMO / NO ES UNA COMPRA REAL</div>
+      <div class="container header-main">
+        <a href="/" class="wordmark"><span class="brand-mark" aria-hidden="true">↯</span> ELECTRO<span>SHOP<span class="brand-dot">.</span></span></a>
+        <form action="/catalogo" role="search" class="header-search">
+          <label for="site-search" class="sr-only">Buscar por nombre o SKU</label>
+          <input id="site-search" type="search" name="q" placeholder="¿Qué vas a crear? Busca por nombre o SKU" />
+          <button type="submit" aria-label="Buscar en el catálogo">↗</button>
+        </form>
+        <span class="header-note">Ideas en marcha.<br /><strong>Electrónica para aprender.</strong></span>
+      </div>
+      <nav class="container main-nav" aria-label="Navegación principal">
+        <a href="/" aria-current={path === '/' ? 'page' : undefined}>Inicio</a>
+        <a href="/catalogo" aria-current={path.startsWith('/catalogo') ? 'page' : undefined}>Catálogo</a>
+        <a href="/#categorias">Categorías</a>
+        <a href="/acerca" aria-current={path.startsWith('/acerca') ? 'page' : undefined}>Sobre la demo</a>
+        <span class="nav-caption">16 piezas para empezar algo</span>
+      </nav>
+    </header>
+    <main id="contenido" tabindex="-1"><slot /></main>
+    <footer class="site-footer"><div class="container footer-grid">
+      <div><a href="/" class="footer-brand">ELECTRO SHOP<span>.</span></a><p>De la curiosidad al circuito.</p></div>
+      <div><p>Catálogo ficticio · precios en MXN</p><p>Sin ventas, pagos ni inventario real.</p></div>
+      <a href="/acerca">Conoce este proyecto <span aria-hidden="true">↗</span></a>
+    </div></footer>
+  </body>
+</html>
