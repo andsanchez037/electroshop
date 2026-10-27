@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProductCard from '../components/ProductCard';
+import { categories, products } from '../data/catalog';
+---
+<Layout title="Ideas que se convierten en circuitos" description="Explora Electro Shop: un catálogo académico original de componentes, herramientas y desarrollo. 16 productos ficticios, sin compras reales.">
+  <section class="hero container">
+    <div class="hero-copy"><p class="eyebrow"><span class="live-dot"></span> PARA MENTES QUE CONSTRUYEN</p>
+      <h1>Tu próxima idea<br />empieza con<br /><em>una conexión.</em></h1>
+      <p class="hero-description">Componentes, herramientas y un mundo por experimentar. Encuentra la pieza que le falta a tu próximo proyecto.</p>
+      <div class="hero-actions"><a class="button" href="/catalogo">Explorar catálogo <span aria-hidden="true">↗</span></a><span>Curiosidad incluida.<br />Productos de demostración.</span></div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="art-coordinate">ES / LAB — 001</div>
+      <svg viewBox="0 0 480 440" fill="none">
+        <defs><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#67616f" /></pattern></defs>
+        <rect width="480" height="440" fill="url(#grid)" />
+        <path d="M10 120H110V190H180M0 300H130V250H185M480 90H360V185H300M480 320H335V275H280M230 0V160M230 440V280" stroke="#b989ef" stroke-width="2" />
+        <g transform="rotate(-12 240 220)"><rect x="132" y="117" width="216" height="216" rx="24" fill="#211b2c" stroke="#a855f7" stroke-width="2" />
+        <rect x="174" y="159" width="132" height="132" rx="12" fill="#a855f7" />
+        <path d="M247 180l-45 51h36l-9 34 48-55h-36l6-30Z" fill="#121214" />
+        <path d="M158 140h163M158 310h163" stroke="#d8b4fe" stroke-width="3" stroke-dasharray="4 12" /></g>
+        <circle cx="110" cy="120" r="5" fill="#d8b4fe" /><circle cx="360" cy="90" r="5" fill="#d8b4fe" /><circle cx="130" cy="300" r="5" fill="#d8b4fe" />
+      </svg>
+      <div class="art-label"><span class="live-dot"></span> HECHO PARA EXPLORAR <span>↗</span></div>
+    </div>
+  </section>
+  <div class="value-strip"><div class="container value-grid"><span><strong>16</strong> productos ficticios</span><span><strong>04</strong> categorías para explorar</span><span><strong>100%</strong> espíritu de laboratorio</span></div></div>
+  <section class="container section" id="categorias">
+    <div class="section-heading"><div><p class="eyebrow">ENCUENTRA TU PUNTO DE PARTIDA</p><h2>¿Qué tienes en mente?</h2></div><a href="/catalogo">Ver todo el catálogo <span aria-hidden="true">↗</span></a></div>
+    <div class="category-grid">{categories.map(category => <a class="category-card" href={`/catalogo?categoria=${category.id}`}><span class="category-number">/{category.mark}</span><h3>{category.name} <span aria-hidden="true">↗</span></h3><p>{category.description}</p><span class="category-count">4 productos demo</span></a>)}</div>
+  </section>
+  <section class="container section featured"><div class="section-heading"><div><p class="eyebrow">DE LA IDEA A LA MESA DE TRABAJO</p><h2>Un buen lugar para empezar.</h2></div><a href="/catalogo">Explorar las 16 piezas <span aria-hidden="true">↗</span></a></div>
+    <div class="product-grid home-products">{[products[4], products[0], products[8], products[12]].map(product => product && <ProductCard product={product} />)}</div>
+  </section>
+  <section class="container lab-note"><p class="eyebrow">APRENDER HACIENDO</p><h2>Un laboratorio de ideas.<br />También en la web.</h2><p>Electro Shop es un proyecto universitario. Explora con libertad: todos los productos, precios y existencias son ejemplos ficticios.</p><a href="/acerca">Sobre esta demostración <span aria-hidden="true">↗</span></a></section>
+</Layout>

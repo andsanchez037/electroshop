@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Catalog from '../components/Catalog';
+---
+<Layout title="Catálogo demo" description="Busca entre 16 productos ficticios por nombre o SKU. Filtra componentes, desarrollo, herramientas y energía; precios demo en pesos mexicanos.">
+  <div class="container section"><p class="eyebrow">EXPLORA / CONECTA / CONSTRUYE</p><h1 class="page-title">Cada proyecto empieza<br />por una pieza<span class="violet">.</span></h1><p class="page-intro">Encuentra tu siguiente conexión. Datos ficticios, posibilidades para aprender.</p>
+    <noscript><p class="notice">Activa JavaScript para buscar, filtrar y consultar las fichas del catálogo interactivo.</p></noscript>
+    <Catalog client:load />
+  </div>
+</Layout>

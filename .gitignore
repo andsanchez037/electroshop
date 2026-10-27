@@ -1,0 +1,42 @@
+# Secrets y configuraciones locales
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Dependencias/compilación/cache
+node_modules/
+web/node_modules/
+web/dist/
+web/.astro/
+web/.netlify/
+.netlify/
+coverage/
+playwright-report/
+test-results/
+
+# Cachés y artefactos temporales locales
+.astro/
+.cache/
+.vite/
+.tmp/
+tmp/
+*.tmp
+*.log
+*.tsbuildinfo
+
+# Paquetes de revisión (se comparten fuera de Git)
+CP002_REVIEW.zip
+*_REVIEW.zip
+
+# Credenciales y claves privadas locales
+.npmrc
+*.pem
+*.key
+*.pfx
+*.p12
+
+# SO/editor
+.DS_Store
+Thumbs.db
+.vscode/*.log

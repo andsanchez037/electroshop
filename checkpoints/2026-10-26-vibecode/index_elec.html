@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electro Shop - Portal de Distribuidores y Catálogo</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            background-color: #121214;
+            background-image: radial-gradient(#27272a 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="text-zinc-100 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- CABECERA PRINCIPAL -->
+    <header class="bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            
+            <!-- LOGOTIPO / NOMBRE -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('public')">
+                <div class="flex flex-col leading-none">
+                    <span class="text-xl font-black tracking-wider text-purple-500 flex items-center gap-1">
+                        E<span class="text-purple-400">⚡</span>ECTRO
+                    </span>
+                    <span class="text-sm font-extrabold tracking-widest text-white -mt-1">
+                        SHOP
+                    </span>
+                </div>
+                <span id="roleBadge" class="text-[10px] bg-zinc-900 text-zinc-400 px-2.5 py-0.5 rounded-full border border-zinc-800 uppercase tracking-wider font-semibold">
+                    Visitante / Público
+                </span>
+            </div>
+            
+            <!-- ACCESOS SEGÚN ROL -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div id="publicNavButtons" class="flex items-center gap-2">
+                    <button onclick="switchView('public')" class="text-xs text-zinc-300 hover:text-white px-3 py-1.5 font-medium transition">Inicio / Nosostros</button>
+                    <button onclick="openRegisterModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3 py-1.5 rounded-lg border border-zinc-700 transition font-medium">
+                        📝 Registrarse como Distribuidor
+                    </button>
+                    <button onclick="simulateLogin()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition shadow-lg shadow-purple-900/30">
+                        🔑 Iniciar Sesión Taller
+                    </button>
+                </div>
+
+                <div id="distributorNavButtons" class="hidden items-center gap-3">
+                    <button onclick="switchView('catalog')" class="text-xs text-purple-400 hover:text-purple-300 font-semibold px-3 py-1.5 transition">📦 Ver Catálogo</button>
+                    <div class="bg-zinc-900 px-3 py-1 rounded-lg text-xs border border-zinc-800 font-medium">
+                        🛒 <span id="cartCount" class="text-purple-400 font-bold">0</span>
+                    </div>
+                    <button onclick="logout()" class="text-xs text-rose-400 hover:text-rose-300 border border-rose-900/50 bg-rose-950/30 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        Cerrar Sesión
+                    </button>
+                </div>
+
+                <div id="adminNavButtons" class="hidden items-center gap-3">
+                    <button onclick="switchView('admin')" class="bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs px-3.5 py-1.5 rounded-lg font-bold transition">
+                        🛡️ Panel Admin de Pedidos
+                    </button>
+                    <button onclick="switchView('adminInventory')" class="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition">
+                        ⚙️ Gestionar Inventario
+                    </button>
+                    <button onclick="logout()" class="text-xs text-rose-400 hover:text-rose-300 border border-rose-900/50 bg-rose-950/30 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        Salir Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- VISTA 1: PÚBLICO GENERAL (INFORMATIVA)     -->
+    <!-- ========================================== -->
+    <div id="publicView" class="max-w-6xl mx-auto px-4 py-10">
+        <!-- Hero Section -->
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="text-xs font-mono uppercase tracking-widest text-purple-400 bg-purple-950/60 border border-purple-800/50 px-3 py-1 rounded-full">Proveedor Especializado en Electrónica</span>
+            <h1 class="text-3xl sm:text-5xl font-black text-white mt-4 mb-4 tracking-tight">Soluciones y Refacciones para la Industria y Talleres</h1>
+            <p class="text-zinc-400 text-sm sm:text-base leading-relaxed">Suministramos componentes de alta calidad, tarjetas de control, microcontroladores y refacciones especializadas para técnicos e ingenieros.</p>
+        </div>
+
+        <!-- Tarjetas de Información / Pasos -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+            <div class="bg-zinc-900/80 p-6 rounded-2xl border border-zinc-800">
+                <div class="text-purple-400 text-xl font-bold mb-2">01. Quiénes Somos</div>
+                <p class="text-zinc-400 text-xs leading-relaxed">Operamos un centro de diagnóstico y distribución de refacciones electrónicas con envíos y atención directa a profesionales del sector.</p>
+            </div>
+            <div class="bg-zinc-900/80 p-6 rounded-2xl border border-zinc-800">
+                <div class="text-purple-400 text-xl font-bold mb-2">02. Catálogo Mayorista</div>
+                <p class="text-zinc-400 text-xs leading-relaxed">Contamos con cientos de referencias en semiconductores, sensores, módulos y tarjetas de control para proyectos y reparaciones.</p>
+            </div>
+            <div class="bg-zinc-900/80 p-6 rounded-2xl border border-zinc-800">
+                <div class="text-purple-400 text-xl font-bold mb-2">03. Cuenta de Distribuidor</div>
+                <p class="text-zinc-400 text-xs leading-relaxed">Regístrate con los datos de tu taller para desbloquear listas de precios especiales y cotizar en línea de forma inmediata.</p>
+            </div>
+        </div>
+
+        <!-- Vista previa visual del catálogo (Ilustrativa sin precios) -->
+        <div class="mb-16">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-white">Categorías Principales (Vista Previa)</h2>
+                <span class="text-xs text-zinc-500">Inicia sesión como distribuidor para ver existencias y precios</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-center">
+                    <span class="text-2xl mb-2 block">⚡</span>
+                    <h3 class="text-xs font-bold text-zinc-200">Capacitores y Potencia</h3>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-center">
+                    <span class="text-2xl mb-2 block">🧠</span>
+                    <h3 class="text-xs font-bold text-zinc-200">Microcontroladores</h3>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-center">
+                    <span class="text-2xl mb-2 block">🎛️</span>
+                    <h3 class="text-xs font-bold text-zinc-200">Tarjetas de Control</h3>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-center">
+                    <span class="text-2xl mb-2 block">📡</span>
+                    <h3 class="text-xs font-bold text-zinc-200">Sensores y Módulos</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Contacto -->
+        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-base font-bold text-white mb-1">¿Tienes dudas o requieres un pedido especial?</h3>
+                <p class="text-zinc-400 text-xs">Contáctanos directamente con nuestro equipo técnico.</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="https://wa.me/526690000000" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    💬 WhatsApp Directo
+                </a>
+                <button onclick="simulateAdminLogin()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium px-4 py-2.5 rounded-xl border border-zinc-700 transition">
+                    🔒 Acceso Admin
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VISTA 2: DISTRIBUIDOR / CATÁLOGO COMPLETO  -->
+    <!-- ========================================== -->
+    <div id="catalogView" class="max-w-7xl mx-auto px-4 py-6 hidden w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- LISTA DE PRODUCTOS -->
+            <div class="lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white tracking-wide">Catálogo Autorizado de Refacciones</h2>
+                        <p class="text-xs text-purple-400">Precios especiales de distribuidor activos</p>
+                    </div>
+                </div>
+                
+                <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+            <!-- CARRITO Y COTIZACIÓN -->
+            <div class="bg-zinc-900/90 backdrop-blur p-5 rounded-2xl border border-zinc-800 h-fit sticky top-20 shadow-xl">
+                <h2 class="text-base font-bold text-white mb-1">Tu Lista de Cotización</h2>
+                <p class="text-xs text-zinc-400 mb-4">Agrega componentes para generar tu folio</p>
+                
+                <div id="cartItems" class="divide-y divide-zinc-800 mb-4 max-h-60 overflow-y-auto">
+                    <p class="text-xs text-zinc-500 py-6 text-center">Tu lista está vacía</p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Observaciones o Urgencia:</label>
+                    <textarea id="customerNotes" placeholder="Ej. Requiero factura, entrega en taller..." class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl focus:outline-none focus:border-purple-500 text-zinc-200 h-16 resize-none"></textarea>
+                </div>
+
+                <button onclick="submitQuote()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-purple-950/50">
+                    📧 Enviar Cotización al Administrador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VISTA 3A: PANEL ADMIN DE COTIZACIONES      -->
+    <!-- ========================================== -->
+    <div id="adminView" class="max-w-7xl mx-auto px-4 py-6 hidden w-full">
+        <div class="bg-purple-950/30 border border-purple-800/40 p-4 rounded-2xl mb-6 flex justify-between items-center backdrop-blur">
+            <div>
+                <h2 class="text-base font-bold text-purple-300">🛡️ Panel de Control - Cotizaciones Recibidas</h2>
+                <p class="text-xs text-purple-200/70">Revisa los pedidos de tus distribuidores, edita cantidades y descarga el Excel.</p>
+            </div>
+            <button onclick="switchView('adminInventory')" class="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">
+                ⚙️ Ir a Gestionar Inventario
+            </button>
+        </div>
+
+        <div id="adminQuotesList" class="space-y-6">
+            <!-- Dinámico -->
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VISTA 3B: GESTIÓN DE INVENTARIO (ADMIN)    -->
+    <!-- ========================================== -->
+    <div id="adminInventoryView" class="max-w-6xl mx-auto px-4 py-6 hidden w-full">
+        <div class="flex justify-between items-center mb-6 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+            <div>
+                <h2 class="text-base font-bold text-white">⚙️ Administración de Productos y Categorías</h2>
+                <p class="text-xs text-zinc-400">Agrega, edita o elimina componentes del catálogo general.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openAddProductModal()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition">
+                    + Nuevo Componente
+                </button>
+                <button onclick="switchView('admin')" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs px-3.5 py-2 rounded-xl transition">
+                    Ver Cotizaciones
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 rounded-2xl border border-zinc-800 p-4 overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] uppercase text-zinc-500 border-b border-zinc-800 pb-2 font-mono">
+                        <th class="pb-2">Foto / SKU</th>
+                        <th class="pb-2">Nombre del Artículo</th>
+                        <th class="pb-2">Categoría</th>
+                        <th class="pb-2">Precio Distribuidor</th>
+                        <th class="pb-2 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                    <!-- Dinámico -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL DE REGISTRO DE DISTRIBUIDOR -->
+    <div id="registerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <h3 class="text-base font-bold text-white mb-1">Solicitud de Cuenta de Distribuidor</h3>
+            <p class="text-xs text-zinc-400 mb-4">Ingresa los datos de tu taller para activar tu acceso al catálogo.</p>
+            
+            <form onsubmit="handleRegister(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre del Taller o Negocio:</label>
+                    <input type="text" id="regBusiness" required placeholder="Ej. Electrónica Industrial del Noroeste" class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre del Técnico / Responsable:</label>
+                    <input type="text" id="regName" required placeholder="Ing. Carlos Mendoza" class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Teléfono / WhatsApp de Contacto:</label>
+                    <input type="tel" id="regPhone" required placeholder="669 000 0000" class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                </div>
+                <div class="pt-3 flex gap-2">
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs transition">
+                        Registrarme y Acceder
+                    </button>
+                    <button type="button" onclick="closeRegisterModal()" class="bg-zinc-800 text-zinc-300 px-4 py-2.5 rounded-xl text-xs">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR / EDITAR PRODUCTO (ADMIN) -->
+    <div id="productModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <h3 id="modalProductTitle" class="text-base font-bold text-white mb-3">Agregar Nuevo Componente</h3>
+            
+            <form onsubmit="saveProduct(event)" class="space-y-3">
+                <input type="hidden" id="editIndex" value="-1">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Nombre del Artículo:</label>
+                    <input type="text" id="prodName" required class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Categoría:</label>
+                        <input type="text" id="prodCategory" required placeholder="Ej. Climas" class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Código SKU:</label>
+                        <input type="text" id="prodSku" required placeholder="ELE-105" class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Precio Distribuidor ($ MXN):</label>
+                        <input type="number" id="prodPrice" required step="0.01" class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">URL Foto (Opcional):</label>
+                        <input type="text" id="prodPhoto" placeholder="https://..." class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Descripción:</label>
+                    <textarea id="prodDesc" rows="2" placeholder="Características técnicas..." class="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-200 focus:outline-none focus:border-purple-500"></textarea>
+                </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Guardar Componente</button>
+                    <button type="button" onclick="closeProductModal()" class="bg-zinc-800 text-zinc-300 px-4 py-2.5 rounded-xl text-xs">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="bg-zinc-950 border-t border-zinc-800 py-6 text-center text-xs text-zinc-500">
+        <p>Electro Shop © 2026 — Sistema de Cotización para Talleres y Distribuidores</p>
+    </footer>
+
+    <!-- LÓGICA DE LA APLICACIÓN -->
+    <script>
+        // BASE DE DATOS DE PRODUCTOS
+        let products = [
+            { id: 1, name: "Capacitor de Trabajo 45uF", category: "Climas", sku: "ELE-101", price: 120, photo: "", desc: "Capacitor de alta resistencia para equipos de refrigeración y aire acondicionado." },
+            { id: 2, name: "Microcontrolador ATmega328P", category: "Electrónica", sku: "ELE-102", price: 65, photo: "", desc: "Microcontrolador DIP de 28 pines compatible con plataformas Arduino." },
+            { id: 3, name: "Tarjeta Vending Aquamatico V2", category: "Tarjetas", sku: "ELE-103", price: 1100, photo: "", desc: "Controlador principal para estaciones de despacho de agua purificada." },
+            { id: 4, name: "Sensor de Presión FSR", category: "Sensores", sku: "ELE-104", price: 160, photo: "", desc: "Sensor de fuerza de película delgada para medición de impacto." }
+        ];
+
+        // COTIZACIONES GUARDADAS
+        let savedQuotes = [
+            {
+                id: "COT-1001",
+                date: "2026-10-26 12:30 PM",
+                customerName: "Taller Electrónico Silva",
+                customerPhone: "6691234567",
+                customerType: "Distribuidor",
+                status: "NUEVA",
+                notes: "Urgente para entrega en sucursal.",
+                items: [
+                    { name: "Capacitor de Trabajo 45uF", qty: 2, price: 120 },
+                    { name: "Microcontrolador ATmega328P", qty: 5, price: 65 }
+                ]
+            }
+        ];
+
+        let cart = [];
+        let currentUserRole = "public"; // public, distributor, admin
+
+        // CAMBIO DE VISTAS Y ROLES
+        function switchView(viewName) {
+            document.getElementById("publicView").classList.add("hidden");
+            document.getElementById("catalogView").classList.add("hidden");
+            document.getElementById("adminView").classList.add("hidden");
+            document.getElementById("adminInventoryView").classList.add("hidden");
+
+            document.getElementById("publicNavButtons").classList.add("hidden");
+            document.getElementById("distributorNavButtons").classList.add("hidden");
+            document.getElementById("adminNavButtons").classList.add("hidden");
+
+            const badge = document.getElementById("roleBadge");
+
+            if (viewName === 'public') {
+                document.getElementById("publicView").classList.remove("hidden");
+                document.getElementById("publicNavButtons").classList.remove("hidden");
+                badge.textContent = "Visitante / Público";
+                currentUserRole = "public";
+            } else if (viewName === 'catalog') {
+                document.getElementById("catalogView").classList.remove("hidden");
+                document.getElementById("distributorNavButtons").classList.remove("hidden");
+                badge.textContent = "🔓 Distribuidor Autorizado";
+                currentUserRole = "distributor";
+                renderCatalog();
+            } else if (viewName === 'admin') {
+                document.getElementById("adminView").classList.remove("hidden");
+                document.getElementById("adminNavButtons").classList.remove("hidden");
+                badge.textContent = "🛡️ Administrador";
+                currentUserRole = "admin";
+                renderAdminQuotes();
+            } else if (viewName === 'adminInventory') {
+                document.getElementById("adminInventoryView").classList.remove("hidden");
+                document.getElementById("adminNavButtons").classList.remove("hidden");
+                badge.textContent = "🛡️ Administrador (Inventario)";
+                currentUserRole = "admin";
+                renderInventoryTable();
+            }
+        }
+
+        // SIMULACIONES DE LOGIN Y REGISTRO
+        function openRegisterModal() { document.getElementById("registerModal").classList.remove("hidden"); }
+        function closeRegisterModal() { document.getElementById("registerModal").classList.add("hidden"); }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const business = document.getElementById("regBusiness").value;
+            alert(`✅ ¡Registro exitoso para ${business}! Tu cuenta ha sido activada como Distribuidor.`);
+            closeRegisterModal();
+            switchView('catalog');
+        }
+
+        function simulateLogin() {
+            alert("🔓 Sesión iniciada como Distribuidor (Taller autorizado).");
+            switchView('catalog');
+        }
+
+        function simulateAdminLogin() {
+            alert("🛡️ Acceso de Administrador concedido.");
+            switchView('admin');
+        }
+
+        function logout() {
+            alert("Sesión cerrada correctamente.");
+            switchView('public');
+        }
+
+        // RENDERIZAR CATALOGO PARA DISTRIBUIDORES
+        function renderCatalog() {
+            const grid = document.getElementById("productGrid");
+            grid.innerHTML = "";
+
+            products.forEach(p => {
+                grid.innerHTML += `
+                    <div class="bg-zinc-900/80 p-4 rounded-2xl border border-zinc-800 hover:border-purple-500/50 transition flex flex-col justify-between group">
+                        <div>
+                            <div class="flex justify-between items-center text-xs text-zinc-500 font-mono mb-1">
+                                <span>SKU: ${p.sku}</span>
+                                <span class="bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">${p.category}</span>
+                            </div>
+                            <h3 class="font-semibold text-zinc-100 text-sm group-hover:text-purple-300 transition">${p.name}</h3>
+                            <p class="text-zinc-400 text-xs mt-1 mb-2">${p.desc}</p>
+                            <div class="text-sm font-bold text-purple-400">$${p.price} MXN <span class="text-[10px] text-zinc-500 font-normal">Precio Taller</span></div>
+                        </div>
+                        <button onclick="addToCart(${p.id})" class="mt-4 bg-zinc-800 hover:bg-purple-600 text-white text-xs py-2 px-3 rounded-xl font-medium transition shadow-sm">
+                            + Agregar a Cotización
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // CARRITO
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ name: product.name, price: product.price, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById("cartItems");
+            document.getElementById("cartCount").textContent = cart.reduce((acc, item) => acc + item.qty, 0);
+
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-zinc-500 py-6 text-center">Tu lista está vacía</p>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            cart.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="py-2.5 flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-medium text-zinc-200">${item.name}</p>
+                            <p class="text-zinc-500">${item.qty} x $${item.price} MXN = <span class="font-bold text-purple-400">$${item.qty * item.price}</span></p>
+                        </div>
+                        <button onclick="cart.splice(${index, 1}); renderCart();" class="text-rose-400 hover:text-rose-300 font-bold px-2">✕</button>
+                    </div>
+                `;
+            });
+        }
+
+        function submitQuote() {
+            if (cart.length === 0) {
+                alert("Agrega componentes a tu lista antes de cotizar.");
+                return;
+            }
+
+            const quoteId = "COT-" + Math.floor(1000 + Math.random() * 9000);
+            const notes = document.getElementById("customerNotes").value;
+
+            const newQuote = {
+                id: quoteId,
+                date: new Date().toLocaleString(),
+                customerName: "Taller Mecatrónico Asociado",
+                customerPhone: "6691234567",
+                customerType: "Distribuidor",
+                status: "NUEVA",
+                notes: notes || "Sin observaciones",
+                items: [...cart]
+            };
+
+            savedQuotes.unshift(newQuote);
+            cart = [];
+            document.getElementById("customerNotes").value = "";
+            renderCart();
+
+            alert(`✅ ¡Cotización ${quoteId} enviada con éxito al administrador! Te contactaremos a la brevedad.`);
+        }
+
+        // PANEL ADMIN - COTIZACIONES
+        function renderAdminQuotes() {
+            const container = document.getElementById("adminQuotesList");
+            if (savedQuotes.length === 0) {
+                container.innerHTML = `<div class="bg-zinc-900 p-8 rounded-2xl text-center text-zinc-500 text-sm border border-zinc-800">No hay cotizaciones registradas.</div>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            savedQuotes.forEach((quote, qIndex) => {
+                let itemsHtml = "";
+                let grandTotal = 0;
+                quote.items.forEach((item, iIndex) => {
+                    const subtotal = item.qty * item.price;
+                    grandTotal += subtotal;
+                    itemsHtml += `
+                        <tr class="border-b border-zinc-800/60 text-xs">
+                            <td class="py-2.5 font-medium text-zinc-200">${item.name}</td>
+                            <td class="py-2.5"><input type="number" min="1" value="${item.qty}" onchange="savedQuotes[${qIndex}].items[${iIndex}].value = this.value; renderAdminQuotes();" class="w-14 px-1 bg-zinc-950 border border-zinc-700 rounded text-center text-purple-400 font-bold"></td>
+                            <td class="py-2.5 text-zinc-400">$${item.price} MXN</td>
+                            <td class="py-2.5 font-bold text-zinc-200">$${subtotal} MXN</td>
+                        </tr>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-xl">
+                        <div class="bg-zinc-950 p-4 border-b border-zinc-800 flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-white text-sm">${quote.id}</span>
+                                <span class="text-xs text-zinc-400 ml-2">👤 <strong>${quote.customerName}</strong> (${quote.customerType}) — Tel: ${quote.customerPhone}</span>
+                            </div>
+                            <span class="text-xs bg-purple-950 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-800">${quote.status}</span>
+                        </div>
+                        <div class="p-4">
+                            <table class="w-full text-left">
+                                <thead><tr class="text-[10px] uppercase text-zinc-500 border-b border-zinc-800 pb-1"><th>Artículo</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+                                <tbody>${itemsHtml}</tbody>
+                            </table>
+                            <div class="mt-3 text-xs text-zinc-400">💬 Notas: "${quote.notes}"</div>
+                        </div>
+                        <div class="p-4 bg-zinc-950/60 border-t border-zinc-800 flex justify-between items-center">
+                            <span class="text-sm font-bold text-purple-400">Total: $${grandTotal} MXN</span>
+                            <button onclick="alert('Excel exportado')" class="bg-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl">📊 Descargar Excel</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // PANEL ADMIN - INVENTARIO
+        function renderInventoryTable() {
+            const tbody = document.getElementById("inventoryTableBody");
+            tbody.innerHTML = "";
+            products.forEach((p, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-zinc-800/60 text-xs">
+                        <td class="py-3 font-mono text-zinc-400">${p.sku}</td>
+                        <td class="py-3 font-medium text-zinc-200">${p.name}</td>
+                        <td class="py-3"><span class="bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">${p.category}</span></td>
+                        <td class="py-3 font-bold text-purple-400">$${p.price} MXN</td>
+                        <td class="py-3 text-right">
+                            <button onclick="editProduct(${index})" class="text-purple-400 hover:text-purple-300 font-medium mr-2">Editar</button>
+                            <button onclick="deleteProduct(${index})" class="text-rose-400 hover:text-rose-300 font-medium">Borrar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openAddProductModal() {
+            document.getElementById("editIndex").value = -1;
+            document.getElementById("modalProductTitle").textContent = "Agregar Nuevo Componente";
+            document.getElementById("prodName").value = "";
+            document.getElementById("prodCategory").value = "";
+            document.getElementById("prodSku").value = "";
+            document.getElementById("prodPrice").value = "";
+            document.getElementById("prodDesc").value = "";
+            document.getElementById("productModal").classList.remove("hidden");
+        }
+
+        function closeProductModal() { document.getElementById("productModal").classList.add("hidden"); }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const index = parseInt(document.getElementById("editIndex").value);
+            const newProd = {
+                id: index === -1 ? products.length + 1 : products[index].id,
+                name: document.getElementById("prodName").value,
+                category: document.getElementById("prodCategory").value,
+                sku: document.getElementById("prodSku").value,
+                price: parseFloat(document.getElementById("prodPrice").value),
+                desc: document.getElementById("prodDesc").value
+            };
+
+            if (index === -1) {
+                products.push(newProd);
+            } else {
+                products[index] = newProd;
+            }
+
+            closeProductModal();
+            renderInventoryTable();
+            alert("✅ Producto guardado correctamente en el inventario.");
+        }
+
+        function editProduct(index) {
+            const p = products[index];
+            document.getElementById("editIndex").value = index;
+            document.getElementById("modalProductTitle").textContent = "Editar Componente";
+            document.getElementById("prodName").value = p.name;
+            document.getElementById("prodCategory").value = p.category;
+            document.getElementById("prodSku").value = p.sku;
+            document.getElementById("prodPrice").value = p.price;
+            document.getElementById("prodDesc").value = p.desc;
+            document.getElementById("productModal").classList.remove("hidden");
+        }
+
+        function deleteProduct(index) {
+            if (confirm("¿Estás seguro de eliminar este producto del inventario?")) {
+                products.splice(index, 1);
+                renderInventoryTable();
+            }
+        }
+    </script>
+</body>
+</html>

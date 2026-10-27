@@ -1,0 +1,7 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProductDetail from '../components/ProductDetail';
+---
+<Layout title="Ficha de producto demo" description="Consulta un producto ficticio por SKU: descripción, precio MXN y stock de demostración. No se procesan compras.">
+  <div class="container section"><a href="/catalogo" class="back-link">← Volver al catálogo</a><noscript><p class="notice">Activa JavaScript para consultar el SKU de esta dirección.</p></noscript><ProductDetail client:load /></div>
+</Layout>
