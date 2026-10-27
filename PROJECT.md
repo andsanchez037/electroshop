@@ -1,6 +1,6 @@
 # Electro Shop — PROJECT.md (fuente de verdad para Codex)
 
-**Actualización:** 26 de octubre de 2026 · **Estado:** CP-001 archivado / CP-002 APPROVED y cerrado; CP-003 pendiente de autorización
+**Actualización:** 26 de octubre de 2026 · **Estado:** CP-002 APPROVED e integrado en main; CP-003A implementado para revisión, PostgreSQL/RLS BLOCKED_EXTERNAL
 
 **Propósito:** prototipo universitario **no comercial** de un catálogo de electrónica con administración segura.
 
@@ -10,11 +10,11 @@
 
 1. Leer `AGENTS.md` antes de desarrollar; después este `PROJECT.md` y `docs/ESTADO.md`.
 2. Para tareas manuales externas, leer `REQUISITOS_EXTERNOS.md`. NO inventar cuentas, credenciales ni accesos.
-3. Usar `docs/CODEX_START.md` como referencia de los prompts por fase. CP-002 está APPROVED; no volver a ejecutarlo. CP-003 requiere una autorización nueva y explícita.
+3. Usar `docs/CODEX_START.md` como referencia de los prompts por fase. CP-002 está APPROVED; no volver a ejecutarlo. El usuario autorizó CP-003A (fundación local); aplicar SQL remoto o avanzar a CP-004 requiere autorización posterior.
 4. La estructura de referencia funcional es https://www.dipmecatronica.com (búsqueda, categorías, productos, carrito), **no** una licencia para copiar su HTML, textos, logo, imágenes o bases de datos. Rediseñar con identidad Electro Shop.
 5. Paleta orientativa recuperada del prototipo: `#121214` carbón, `#a855f7` violeta, blanco y grises. Rescatar únicamente la paleta y el concepto visual; **no** llevar el `index_elec.html` al código productivo.
 6. **Stack operativo para el MVP:** Astro (sitio estático) + islas React + TypeScript estricto + Tailwind compilado + Vitest y/o herramientas de test adecuadas; Git/GitHub; Netlify Free; Supabase PostgreSQL + Auth y RLS. Firebase Firestore **solo alternativa si el equipo cambia esta decisión**. No implementar ambos.
-7. **Situación vigente:** CP-002 cerrado y APPROVED, frontend local con datos ficticios. Esperar autorización de CP-003 y su preparación humana según `REQUISITOS_EXTERNOS.md`; no conectar Supabase ni Netlify antes del checkpoint autorizado.
+7. **Situación vigente:** CP-002 aprobado e integrado. CP-003A prepara migración/seed/RLS/tests/adaptador sin ejecutar SQL remoto, crear admins reales ni desplegar. Esperar revisión de seguridad; no declarar integración persistente completada mientras RLS/servicios locales y remoto no estén verificados.
 8. Evitar sobreingeniería: no FastAPI, pagos, integraciones ERP, e-mail transaccional, inventario real, envío real, scraping, funciones serverless ni Microservicios en la primera entrega.
 9. Toda acción simulada se rotula `DEMO / NO ES UNA COMPRA REAL`; jamás usar datos reales de clientes, pedidos o teléfonos sin revisión.
 10. **Pausar entre checkpoints:** al terminar cada CP, actualizar `docs/ESTADO.md`, publicar resultados verificables y esperar revisión. No iniciar la siguiente fase automáticamente.
@@ -98,7 +98,10 @@ Los requisitos siguientes se conservan como referencia del alcance aprobado:
 
 **Aceptar si:** `cd web && npm install && npm run check && npm run lint && npm run test && npm run build` pasan (si scripts existen deben funcionar; si se omite alguno justificarlo). Home/catálogo/producto funcionan localmente; textos y assets no pertenecen a DIP; diseño coherente y original; no faltan imports; `docs/ESTADO.md` actualizado. Commit sugerido `feat: CP-002 frontend foundation and demo catalog`.
 
-### CP-003 — Supabase (schema, datos, RLS) **(ESPERAR APROBACIÓN)**
+### CP-003 — Supabase (schema, datos, RLS) **(CP-003A EN REVISIÓN; SQL REMOTO NO AUTORIZADO)**
+
+**Subfase autorizada CP-003A:** rama `cp-003-supabase` desde main actualizado `ddb22b954bfe391349475a2ad6b4476e03cc464f`. Tablas/constraints/grants/RLS, seed reproducible, pgTAP y adaptador tipado de lectura preparados. Pruebas PostgreSQL/RLS BLOCKED_EXTERNAL: faltan Supabase CLI/Docker locales. Frontend conserva demo por defecto; Supabase exige selección explícita y propaga errores sin fallback. No se ejecutó SQL remoto ni se crearon cuentas/admins reales. Detalle: `docs/CP003A_HANDOFF.md` y `supabase/README.md`. CP-003 completo todavía NO aceptado; CP-004 no iniciado.
+
 **Antes:** usuario crea proyecto Free y prepara URL + publishable key en `.env.local`, siguiendo `REQUISITOS_EXTERNOS.md`. Si no están listas las cuentas, Codex solo genera SQL/migraciones y pruebas, sin declarar integración real completada.
 
 **Implementar Codex:** `supabase/migrations/` versionadas + seed demo reproducible, `categories`, `products` y una lista de administradores `admin_users` (o patrón equivalente verificado, sin autoasignación de rol); constraints (SKU único, `price_cents >= 0`, `stock_demo >= 0`, categoría FK), índices de búsqueda necesarios, RLS ON para todas las tablas expuestas, lectura pública solo de productos activos, escritura solo de admin verificada en BD, función privilegiada con `search_path` seguro si aplica. Adaptador TS de datos demo/Supabase, errores y estados de reconexión, `.env.example`. Tests RLS de usuario anónimo, usuario autenticado normal y admin usando métodos seguros/locales (si no se pueden correr, reportar exactamente qué prueba queda pendiente). Incluir paso explícito de alta manual de primer admin, sin insertarla desde cliente.
@@ -157,7 +160,7 @@ Protocolo de revisión: el usuario comparte enlace a PR, diff, árbol de archivo
 |---|---|---|---|
 | CP-001 | Vibecode HTML original | **Archivado** | Ninguna |
 | CP-002 | Astro + home + catálogo demo | **APPROVED / cerrado por aprobación comunicada por el usuario** | Ninguna pendiente para el cierre |
-| CP-003 | Supabase SQL, RLS y catálogo persistente | **WAITING — no iniciado; requiere nueva autorización** | Proyecto Supabase Free |
+| CP-003 | Supabase SQL, RLS y catálogo persistente | **CP-003A en revisión / RLS BLOCKED_EXTERNAL; no aplicado remotamente** | Supabase CLI + Docker locales para tests; posterior autorización de SQL remoto |
 | CP-004 | Login real + CRUD admin | **Pendiente** | Usuario admin de prueba |
 | CP-005 | Carrito/pedido simulado | **Pendiente** | Ninguna adicional |
 | CP-006 | Netlify y demo pública | **Pendiente** | GitHub + Netlify |

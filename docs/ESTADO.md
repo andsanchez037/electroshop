@@ -2,15 +2,15 @@
 
 **Última actualización:** 2026-10-26
 
-**Estado general:** CP-002 **APPROVED / cerrado**, por aprobación técnica del orquestador externo comunicada por el usuario. CP-003 no iniciado; espera autorización explícita.
+**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A implementado para revisión de seguridad; tests PostgreSQL/RLS **BLOCKED_EXTERNAL**. Sin SQL remoto ni CP-004.
 
-**Bloqueos inmediatos:** ninguno para desarrollar localmente con los programas necesarios; credenciales Supabase/Netlify NO requeridas en CP-002.
+**Bloqueos inmediatos CP-003A:** faltan Supabase CLI, Docker y PostgreSQL locales para ejecutar SQL/pgTAP. La integración remota espera revisión y nueva autorización; credenciales locales no se imprimen ni versionan.
 
 | CP | Estado | Ejecutor | Resultado |
 |---|---|---|---|
 | CP-001 | Archivado | equipo | `index_elec.html` guardado sin uso en producción |
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
-| CP-003 | WAITING / NO INICIADO | Codex | Espera autorización explícita + preparación humana de Supabase |
+| CP-003 | CP-003A REVIEW / BLOCKED_EXTERNAL (DB) | Codex | Fundación SQL/adaptador preparados; RLS no ejecutado por falta de servicios locales; remoto sin aplicar |
 | CP-004 | WAITING | Codex | Espera admin de prueba |
 | CP-005 | WAITING | Codex | Espera aprobación |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
@@ -103,3 +103,20 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Validación de este cierre documental: git status, revisión del índice y diff; solamente los dos documentos autorizados deben estar staged. Comparación de todo web con bd6574b para preservar código, pruebas, configuraciones y lockfile. Comprobación de exclusión del ZIP y entornos reales, búsqueda de patrones comunes de secretos en los documentos. No se repiten pruebas npm: no cambia la aplicación. Los resultados ejecutados en la auditoría siguen siendo instalación/check/lint/14 tests/build/smoke/audit PASS; no se afirma una ejecución nueva.
 - Entrega prevista por esta orden: commit documental en cp-002-foundation y push normal a origin; PR dirigido a main (o URL exacta de comparación si el conector no permite crearlo). El resultado efectivo y el SHA final se reportan tras las operaciones, sin predeclararlos aquí. Sin force push ni merge automático.
 - Preparación para la siguiente fase: documentación vigente actualizada; CP-003 continúa WAITING / NO INICIADO. Requiere nueva autorización y preparación humana según REQUISITOS_EXTERNOS.md. No se crean migraciones, SDK, credenciales ni conexiones externas de CP-003. Esperar la próxima instrucción del usuario/orquestador.
+
+### 2026-10-26 — CP-003A / READY_FOR_REVIEW — BLOCKED_EXTERNAL (POSTGRESQL/RLS)
+
+- Autorización: fundación de Supabase exclusivamente, sin ejecutar migraciones remotas, crear admins/cuentas reales, desplegar, fusionar main ni iniciar CP-004. Leídos AGENTS, PROJECT, REQUISITOS_EXTERNOS y ESTADO. CP-002 aprobado e integrado en main.
+- Rama nueva: cp-003-supabase, creada después de fetch origin main y comprobación fast-forward desde `ddb22b954bfe391349475a2ad6b4476e03cc464f` (main más reciente). Entrega como commit local de esta rama; no se realiza push en esta tarea. SHA de entrega: consultar git log -1; base documentada y reporte final con SHA concreto.
+- SQL preparado: `supabase/migrations/20261026000100_catalog_security.sql` (transacción, categories/products/admin_users, constraints SKU/precio/stock/FK, propietarios postgres, RLS en las tres tablas, grants mínimos, siete policies y helper SECURITY DEFINER sin parámetros, esquema privado no expuesto, search_path vacío). admin_users no concede grants/policies a clientes, ni siquiera a admins. No se crean roles/usuarios reales ni RPC de autoasignación.
+- Seed: `supabase/seed.sql` generado desde los 16 productos/cuatro categorías de CP-002; upsert por SKU/id, sin usuarios. `web/scripts/generate-seed.mjs` genera y compara. Reejecutar seed sobrescribe esos datos DEMO; idempotencia ejecutada en DB sigue pendiente.
+- Pruebas DB preparadas: `supabase/tests/database/catalog_rls.test.sql`, 53 aserciones pgTAP declaradas (NO superadas/no ejecutadas): anon, usuario normal, admin, metadata falsa, sub ausente, active/categorías, CRUD, grants, constraints, autoasignación, revocación. Fixtures locales sin emails/passwords, con rollback. `supabase/config.toml` solo local; `web/scripts/test-db.mjs` fija --local, no acepta destinos arbitrarios, exige evidencia TAP real y no expone salidas sensibles.
+- Adaptador: `web/src/data/catalog-source.ts`, fetch REST solo lectura con publishable key, validación runtime del contrato Product, paginación/count exacto, timeout y mensajes genéricos. `loadProducts()` conserva interfaz; ficha y catálogo usan el mismo origen. Modo demo por defecto; modo supabase explícito propaga errores sin fallback a productos ficticios. Error de ficha separado de SKU no encontrado con reintento. No se consulta API real durante la tarea.
+- Entornos: `web/.env.example` y plantilla raíz con placeholders; preflight `web/scripts/public-env.mjs` en astro.config y validación al seleccionar origen rechazan claves elevadas/JWT legacy, PUBLIC_* no previstas y URLs con credenciales aun en demo. `web/.env.local` permanece ignorado, no modificado ni impreso; validación de valores solo en proceso. No nuevas dependencias, package-lock intacto. `.gitignore` añade estado local Supabase .temp/.branches.
+- Frontend PASS ejecutado: `npm.cmd run check` (24 archivos, cero errores/warnings/hints), `npm.cmd run lint`, `npm.cmd run test` (4 archivos, 27 pruebas: 14 originales intactas +13 nuevas), `npm.cmd run build` (cinco páginas), `npm.cmd run seed:check`. No fue necesaria instalación nueva y no se afirma una auditoría npm nueva. Los controles se repitieron tras reforzar el guard de URLs.
+- Smoke PASS: build con PUBLIC_CATALOG_MODE=demo explícito y script smoke aprobado ejecutado sobre copia temporal de dist: cuatro rutas a 360/1440, axe con contraste, búsqueda/filtros/limpieza, ficha/recarga, SKU inválido, teclado skip link y 404; sin pageerror JS. Ocho capturas temporales fuera del repositorio; evidencia CP-002 sin sobrescribir. La suite frontend fija modo demo y usa transporte inyectado en tests Supabase.
+- DB BLOCKED_EXTERNAL ejecutado: `npm.cmd run test:db`, salida explícita de herramientas faltantes, exit 2. No se detectaron Supabase CLI, Docker ni psql en PATH. No se ejecutó ni migración, seed, pgTAP o pruebas de grants/RLS/constraints en PostgreSQL. NO PASS de seguridad ni de integración persistente; mocks HTTP no sustituyen DB.
+- Preservación: estilos/páginas/layouts/assets, dataset de 16 productos y tests originales CP-002 conservados; cambios de datos aislados y estado adicional de error en ficha. Portada/destacados y taxonomía visual siguen estáticos DEMO; el adaptador admite las cuatro categorías aprobadas, rechazando otras explícitamente. Login/CRUD UI, carrito, remoto y despliegue fuera de alcance.
+- Documentación: README, PROJECT, esta entrada y `docs/CP003A_HANDOFF.md`; matriz de permisos, reproducción local y procedimiento futuro de primer admin en `supabase/README.md`. Historial CP-002 preservado, sin convertir sus resultados en pruebas de DB.
+- Riesgos/bloqueos: ejecutar SQL/pgTAP en una instancia local desechable con herramientas disponibles antes de aceptación de seguridad; revisar gateway/schema privado antes de cualquier integración remota. Primer admin solo futuro operador SQL con usuario Auth revisado y autorización posterior. No ejecutar --linked/--db-url ni aplicar SQL en Dashboard durante esta subfase.
+- Próxima acción: detenerse y esperar revisión de seguridad del orquestador. No aplicar remoto ni iniciar CP-004. CP-003 completo sigue sin aceptación.

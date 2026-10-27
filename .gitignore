@@ -24,6 +24,8 @@ tmp/
 *.tmp
 *.log
 *.tsbuildinfo
+supabase/.temp/
+supabase/.branches/
 
 # Paquetes de revisión (se comparten fuera de Git)
 CP002_REVIEW.zip

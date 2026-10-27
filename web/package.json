@@ -13,7 +13,10 @@
     "lint": "eslint .",
     "test": "vitest run",
     "build": "astro build",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "seed:generate": "node scripts/generate-seed.mjs",
+    "seed:check": "node scripts/generate-seed.mjs --check",
+    "test:db": "node scripts/test-db.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.1",
