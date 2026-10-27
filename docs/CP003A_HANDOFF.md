@@ -78,3 +78,42 @@ La suite pgTAP preparada cubre grants, RLS habilitado, helper/search_path, seed,
 4. El orquestador revisa SQL, grants, policies, helper, pruebas y bloqueo. Solo tras dictamen y nueva autorización se podrá considerar SQL remoto e integración. No usar --linked/--db-url ni crear admins reales durante CP-003A.
 
 **Siguiente acción: esperar revisión de seguridad. Sin push, merge, despliegue ni CP-004.**
+
+## Intento de validación local — BLOCKED_EXTERNAL
+
+El usuario comunicó que la revisión estática externa del commit `6387a5e6c7d7a6d142e5d995728553687675dc5b` no encontró escalación de privilegios confirmada, pero **no aprobó CP-003A**. Autorizó validar exclusivamente en Supabase local desechable, con parada explícita si faltan herramientas y sin instalar software del sistema sin aprobación.
+
+Se releyeron AGENTS, PROJECT, este handoff, supabase/README y ESTADO. Rama comprobada: `cp-003-supabase`, HEAD inicial `6387a5e6c7d7a6d142e5d995728553687675dc5b`. La modificación previa de `.env.example` se conserva fuera del commit; no se leen ni muestran sus valores ni los de `.env.local` en este intento.
+
+### Evidencia nueva de herramientas
+
+| Inspección local ejecutada | Resultado |
+| --- | --- |
+| `Get-Command docker/docker.exe` | No disponibles en PATH |
+| `Get-Command supabase/supabase.exe/supabase.cmd` | No disponibles en PATH |
+| Docker Desktop y docker.exe bajo Program Files y rutas de instalación por usuario habituales | Ninguno de los candidatos existe |
+| Registro de desinstalación HKLM, vistas 64/32 bits (segunda lectura mediante Microsoft.Win32.RegistryKey) | 0 entradas Docker Desktop; 0 errores de lectura |
+| Procesos Docker Desktop, com.docker.backend y dockerd | 0 detectados |
+| Servicio com.docker.service | 0 detectados |
+| CLI Supabase en Scoop, enlace WinGet, npm de usuario y web/node_modules/.bin | No encontrada en rutas comprobadas |
+| WSL launcher | wsl.exe disponible; esto NO demuestra que WSL2 o Docker estén configurados |
+| Override DOCKER_HOST | Ausente; no se contactó ningún daemon remoto |
+
+La primera consulta PowerShell de registros mediante wildcard produjo un error de conversión; por ello se repitió mediante RegistryKey, con cero errores. No se basa el bloqueo únicamente en PATH. Con estas comprobaciones, Docker Desktop/motor y CLI Supabase **no están disponibles para ejecutar esta validación**. No se instaló software ni se intentó reemplazar la prueba real con mocks o una base distinta.
+
+### Resultado de esta ejecución
+
+- **53/53 aserciones SQL/RLS: NOT EXECUTED (0 ejecutadas), BLOCKED_EXTERNAL.** No se inicia Supabase, no se aplican migraciones/seed, no se crean usuarios ni administradores, y no se ejecutan pgTAP ni pruebas REST.
+- Seed: ejecución SQL e idempotencia **NOT EXECUTED**. Comprobar que el generador coincide con un archivo SQL no acredita idempotencia en PostgreSQL.
+- Windows runner: compatibilidad efectiva con la CLI y rechazo de tests omitidos/parciales **pendientes**. La inspección del código actual muestra que valida un recuento mayor que cero, no exactamente 53; antes de aceptar una ejecución debe reforzarse esa comprobación y verificarse el TAP completo. No se ejecuta ni modifica el runner en este intento, por la instrucción de detenerse ante herramientas ausentes.
+- Frontend check/lint/test/build: **NOT RUN en este intento**, por la parada solicitada. Los PASS anteriores de la tabla histórica corresponden a la implementación previa, no a esta validación.
+- Cambios exclusivos de documentación de bloqueo en ESTADO y este handoff; código CP-002/CP-003A, dependencias, SQL y configuración intactos. Commit local documental, sin push. No se ejecutan Git fetch/ls-remote/push ni llamadas a Supabase u otros servicios externos.
+
+### Acción humana exacta para desbloquear
+
+1. Instalar Docker Desktop para Windows mediante su instalador oficial. Esta instalación de sistema no fue autorizada para ejecución por el agente y debe realizarla el usuario; si el instalador pide habilitar WSL2/virtualización o reiniciar, completar esos pasos.
+2. Abrir Docker Desktop, seleccionar/usar el motor de contenedores Linux y esperar a que indique que está operativo.
+3. Abrir una terminal PowerShell nueva en este equipo y comprobar `docker --version` y `docker version --format '{{.Server.Os}} {{.Server.Version}}'`. El segundo debe devolver `linux` y la versión del servidor, sin error de conexión. Si Docker ya está instalado en una ruta diferente, indicar la ruta y hacerlo accesible a esta sesión.
+4. Solicitar reanudar la validación local. Con Docker disponible, podrá prepararse la CLI oficial mediante un método local soportado, dentro de la autorización dada. No se instaló CLI en este intento porque Docker ya bloquea toda la validación y el usuario pidió detenerse ante herramientas ausentes.
+
+No se solicita compartir claves ni salidas de `supabase start/status`. CP-003A continúa **NO APROBADO**. Esperar disponibilidad de herramientas e instrucción de reanudación; ninguna operación remota ni CP-003B/CP-004 está autorizada.

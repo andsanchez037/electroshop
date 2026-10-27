@@ -2,7 +2,7 @@
 
 **Última actualización:** 2026-10-26
 
-**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A implementado para revisión de seguridad; tests PostgreSQL/RLS **BLOCKED_EXTERNAL**. Sin SQL remoto ni CP-004.
+**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A NO APROBADO: revisión estática externa sin escalación confirmada (comunicada por usuario); validación local **BLOCKED_EXTERNAL**, Docker Desktop/motor y Supabase CLI no disponibles. Las 53 aserciones SQL/RLS siguen NOT EXECUTED.
 
 **Bloqueos inmediatos CP-003A:** faltan Supabase CLI, Docker y PostgreSQL locales para ejecutar SQL/pgTAP. La integración remota espera revisión y nueva autorización; credenciales locales no se imprimen ni versionan.
 
@@ -120,3 +120,14 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Documentación: README, PROJECT, esta entrada y `docs/CP003A_HANDOFF.md`; matriz de permisos, reproducción local y procedimiento futuro de primer admin en `supabase/README.md`. Historial CP-002 preservado, sin convertir sus resultados en pruebas de DB.
 - Riesgos/bloqueos: ejecutar SQL/pgTAP en una instancia local desechable con herramientas disponibles antes de aceptación de seguridad; revisar gateway/schema privado antes de cualquier integración remota. Primer admin solo futuro operador SQL con usuario Auth revisado y autorización posterior. No ejecutar --linked/--db-url ni aplicar SQL en Dashboard durante esta subfase.
 - Próxima acción: detenerse y esperar revisión de seguridad del orquestador. No aplicar remoto ni iniciar CP-004. CP-003 completo sigue sin aceptación.
+
+### 2026-10-26 — CP-003A / VALIDACIÓN LOCAL BLOQUEADA — BLOCKED_EXTERNAL
+
+- Nueva instrucción: validar únicamente Supabase local desechable tras revisión estática externa del commit `6387a5e6c7d7a6d142e5d995728553687675dc5b`, sin vulnerabilidad de escalación confirmada según el usuario. CP-003A NO APROBADO. Se releen AGENTS, PROJECT, CP003A_HANDOFF, supabase/README y ESTADO antes de cambiar documentación.
+- Rama comprobada cp-003-supabase, HEAD inicial 6387a5e6c7d7a6d142e5d995728553687675dc5b. Se preserva la modificación previa del usuario en .env.example, sin mostrar valores ni incluirla en commit. No se hacen operaciones Git remotas.
+- Diagnóstico ejecutado: Get-Command no encuentra docker ni Supabase CLI; archivos Docker Desktop/docker.exe ausentes en Program Files y rutas habituales por usuario; sin CLI en rutas Scoop/WinGet/npm de usuario/node_modules comprobadas; 0 procesos Docker Desktop/com.docker.backend/dockerd y 0 servicios com.docker.service. Registro HKLM 64/32 consultado mediante RegistryKey: 0 entradas Docker Desktop, 0 errores. La primera consulta wildcard falló por conversión y se sustituyó por esa segunda lectura. wsl.exe existe, sin que eso pruebe WSL2 operativo. DOCKER_HOST ausente; no se conecta a motores remotos.
+- Resultado: BLOCKED_EXTERNAL por herramientas locales no disponibles. Se obedece la parada explícita: no instalación de sistema ni CLI, no arranque Supabase, no migración/seed, no pgTAP, no REST local, no usuarios/admins y ningún SQL remoto. **53/53 SQL/RLS NOT EXECUTED; 0 ejecutadas; nunca PASS parcial.** Seed SQL/idempotencia NOT EXECUTED. Windows runner y validación REST pendientes.
+- Hallazgo de inspección del runner, sin ejecución ni corrección por bloqueo: actualmente exige Tests > 0; todavía no garantiza exactamente 53 ni rechazo completo de omisiones. Reforzar y comprobar el TAP completo cuando se pueda reanudar; no aceptar una ejecución parcial.
+- Frontend check/lint/test/build: NOT RUN en este intento debido a la instrucción de parar si faltan herramientas. Los PASS anteriores son históricos, no evidencia nueva. Se modifica solo documentación: docs/ESTADO.md y docs/CP003A_HANDOFF.md; sin cambios de código, SQL, configuración ni dependencias. Commit local documental, no push.
+- Acción humana requerida: instalar Docker Desktop para Windows desde el instalador oficial, completar habilitación WSL2/virtualización o reinicio si lo solicita, abrir Docker Desktop con motor Linux y esperar a que esté operativo. En una terminal nueva comprobar docker --version y docker version --format '{{.Server.Os}} {{.Server.Version}}' (debe mostrar linux y versión del servidor). Si ya existe en otra ruta, facilitarla/hacerla accesible a la sesión. Después solicitar reanudación para preparar CLI oficial y ejecutar el protocolo local. No compartir claves ni salida sensible de Supabase.
+- Evidencia ampliada y pasos exactos: sección final de docs/CP003A_HANDOFF.md. Esperar disponibilidad de herramientas e instrucción; sin push, merge, despliegue, CP-003B ni CP-004. CP-003A sigue NO APROBADO.
