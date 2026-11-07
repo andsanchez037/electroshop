@@ -1,16 +1,16 @@
 # ESTADO.md — bitácora de ejecución y revisión
 
-**Última actualización:** 2026-11-06
+**Última actualización:** 2026-11-07
 
-**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A **APPROVED (implementación y validación local únicamente)** por el orquestador externo, según comunicación del usuario tras revisar CP003A_REVIEW.patch. Evidencia aprobada: **53/53 SQL/RLS**, cero fallos/omisiones; REST anon 7/7 y seed idempotente. Remoto sin aplicar; CP-003B/CP-004 no autorizados. Los bloqueos y estados de revisión anteriores son históricos.
+**Estado general:** CP-002 y CP-003A APPROVED/integrados en main. CP-003B **APPROVED / CERRADO TÉCNICAMENTE** por aprobación externa comunicada por el usuario: esquema y seed remotos verificados, frontend local 16 productos/4 categorías, sin fallback ni errores normales. Cierre documental en curso; Netlify sin publicar y CP-004 no autorizado. Detalle: [CP003B_HANDOFF.md](CP003B_HANDOFF.md). Los estados anteriores se conservan como historial.
 
-**Bloqueos inmediatos CP-003A:** ninguno; implementación y validación local aprobadas. Integración remota espera revisión y nueva autorización; credenciales locales no se imprimen ni versionan.
+**Bloqueos inmediatos CP-003B:** ninguno para el cierre técnico. Ajustes reales de Netlify UNKNOWN por falta de acceso; configurar/publicar requiere autorización posterior. Credenciales y respaldos permanecen fuera de Git.
 
 | CP | Estado | Ejecutor | Resultado |
 |---|---|---|---|
 | CP-001 | Archivado | equipo | `index_elec.html` guardado sin uso en producción |
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
-| CP-003 | CP-003A **APPROVED (solo local)** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP, REST 7/7, seed idempotente; remoto sin aplicar; CP-003 completo no cerrado |
+| CP-003 | CP-003A/CP-003B **APPROVED** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP local; migración/seed remotos y frontend local aprobados; cierre documental |
 | CP-004 | WAITING | Codex | Espera admin de prueba |
 | CP-005 | WAITING | Codex | Espera aprobación |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
@@ -154,3 +154,11 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Publicación autorizada: commit documental, push normal de cp-003-supabase a origin y PR dirigido a main; resultado y SHA se informan después de verificarlos. Sin force push, merge automático, SQL Supabase remoto, migraciones remotas, operaciones linked, cuentas/admins reales, despliegue, CP-003B ni CP-004.
 - Límites no bloqueantes: validación ejecutada solo con CLI 3/Windows y PostgreSQL local; rama CLI 2 no ejecutada; taxonomía de cuatro categorías y destacados DEMO estáticos; límites de accesibilidad heredados. La configuración/gateway remotos requieren revisión y autorización posterior. PROJECT y los informes previos conservan estados de la entrega anterior; este registro documenta el nuevo dictamen local.
 - Estado final de checkpoint: CP-003A APPROVED solo local. Detenerse tras publicación y esperar nueva autorización del orquestador.
+
+### 2026-11-07 — CP-003B / APPROVED — CIERRE DOCUMENTAL
+
+- El usuario comunica aprobación del orquestador de la integración frontend local contra catálogo Supabase real. Los resultados de CP-003B están consolidados en CP003B_HANDOFF.md: migración/historial, inspección RLS/grants/helper, seed remoto ejecutado por humano y luego verificado (4/16/0), REST anon y navegador real PASS. Las 53 aserciones SQL/RLS fueron locales CP-003A, no pruebas de escritura en producción.
+- Rama cp-003b-remote, base c557e146a6501a54b3cf06ce175a944fded766c6. Fetch origin main y comparación confirman main/HEAD iguales al inicio: cero diferencias funcionales y ningún PR de código necesario. Este commit documental sí aporta cierre y preparación operativa; sin PR artificial de aplicación.
+- Solo documentación propia: docs/CP003B_HANDOFF.md, PROJECT.md, README.md y este ESTADO. Ambas plantillas modificadas por usuario y CP003A_REVIEW.patch quedan intactas fuera del commit. web/.env.local conserva modo supabase, URL/key sin mostrar, ignorado/no versionado. Código, SQL, tests y dependencias intactos.
+- Netlify: no netlify.toml, estado .netlify, CLI ni acceso autenticado disponible. Ajustes del sitio UNKNOWN, sin cambios. Configuración requerida: base web, build npm run build, publish dist; tres PUBLIC_* del catálogo en Builds/Production. Previews en demo salvo autorización. Reconfigurar variables y desplegar requieren autorización posterior. Fuentes oficiales y detalles en handoff.
+- Controles finales NUEVOS del cierre, ejecutados desde web: npm.cmd run check PASS (27 archivos, 0 errores/warnings/hints), lint PASS, test PASS (31/31 en cinco archivos), build PASS (cinco páginas estáticas); git diff --check PASS. Sin cambios de implementación. Publicación documental autorizada sin force push ni merge. Commit y título PR con [skip netlify] para evitar deploys automáticos según documentación oficial. No se ejecuta SQL remoto ni trabajo CP-004.
