@@ -21,4 +21,12 @@ describe('Evidencia completa de pgTAP local', () => {
     }
     expect(completeTap(tap.replace('ok 20 ', 'not ok 20 '))).toBe(false);
   });
+  it('la suite CP-004 exige su propio plan fijo de 16 sin debilitar CP-003A', () => {
+    const adminTap = ['1..16', ...Array.from({ length: 16 }, (_, i) => `ok ${i + 1} - admin`)].join('\n');
+    expect(completeTap(adminTap, 16)).toBe(true);
+    expect(completeTap(adminTap)).toBe(false);
+    expect(completeTap(adminTap + ' # SKIP pending', 16)).toBe(false);
+    expect(completeSummary('Files=1, Tests=16\nResult: PASS', 16)).toBe(true);
+    expect(completeSummary('Files=1, Tests=15\nResult: PASS', 16)).toBe(false);
+  });
 });

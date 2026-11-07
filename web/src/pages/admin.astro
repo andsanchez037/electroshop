@@ -1,0 +1,11 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AdminApp from '../components/admin/AdminApp';
+import '../styles/admin.css';
+---
+<Layout title="Administración" description="Acceso administrativo a los productos DEMO de Electro Shop.">
+  <div class="container section"><p class="eyebrow">ADMINISTRACIÓN / DEMO</p><h1 class="page-title">Gestiona el catálogo<span class="violet">.</span></h1><p class="page-intro">Productos ficticios. Cada operación requiere autorización de PostgreSQL.</p>
+    <noscript><p class="notice">Activa JavaScript para iniciar sesión y gestionar el catálogo.</p></noscript>
+    <AdminApp client:only="react"><p slot="fallback" role="status">Preparando acceso…</p></AdminApp>
+  </div>
+</Layout>

@@ -10,6 +10,7 @@ const path = Astro.url.pathname;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    {path.startsWith('/admin') && <meta name="robots" content="noindex, nofollow" />}
     <meta name="theme-color" content="#121214" />
     <meta property="og:title" content={`${title} | Electro Shop`} />
     <meta property="og:description" content={description} />
@@ -35,6 +36,7 @@ const path = Astro.url.pathname;
         <a href="/catalogo" aria-current={path.startsWith('/catalogo') ? 'page' : undefined}>Catálogo</a>
         <a href="/#categorias">Categorías</a>
         <a href="/acerca" aria-current={path.startsWith('/acerca') ? 'page' : undefined}>Sobre la demo</a>
+        <a href="/admin" aria-current={path.startsWith('/admin') ? 'page' : undefined}>Administración</a>
         <span class="nav-caption">16 piezas para empezar algo</span>
       </nav>
     </header>

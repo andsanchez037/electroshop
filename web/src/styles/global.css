@@ -143,7 +143,7 @@ input::placeholder { color: #aaa5b2; }
   .demo-banner span { margin-inline: 4px; }
   .header-main { flex-wrap: wrap; padding-block: 20px; gap: 19px; }
   .header-search { flex-basis: 100%; }
-  .main-nav { justify-content: space-between; gap: 12px; font-size: 12px; }
+  .main-nav { justify-content: space-between; gap: 12px; font-size: 12px; flex-wrap: wrap; }
   .main-nav a { padding-block: 13px; }
   .hero { grid-template-columns: 1fr; padding-block: 35px; gap: 32px; }
   .hero h1 { font-size: 43px; }
