@@ -1,6 +1,6 @@
 # CP-003A — handoff para revisión de seguridad
 
-**Estado vigente (2026-11-06): READY_FOR_REVIEW / LOCAL PASS. 53/53 SQL/RLS sin fallos ni omisiones, REST anon 7/7, seed idempotente. No aprobado ni aplicado remotamente.** La evidencia nueva está en la última sección; los resultados/bloqueos anteriores se conservan como historial.
+**Estado vigente (2026-11-06): APPROVED — implementación y validación local únicamente.** El usuario comunicó la aprobación del orquestador externo tras revisar CP003A_REVIEW.patch, correspondiente a la entrega `47f04dc426d7083d86811a57dab7894876b8038a`: 53/53 SQL/RLS sin fallos ni omisiones, REST anon 7/7 y seed idempotente. **Remoto sin aplicar; CP-003B/CP-004 no autorizados.** Los resultados/bloqueos y estados de revisión anteriores se conservan como historial.
 
 ## Alcance autorizado y punto de partida
 
@@ -161,3 +161,13 @@ REST utiliza únicamente URL loopback validada y credencial anon del stack local
 Reproducción local con CLI 3: iniciar stack, `supabase db reset --yes` en copia desechable, y desde web ejecutar `npm.cmd run test:db`, `node scripts/validate-db-local.mjs`, otra vez `npm.cmd run test:db` y controles frontend. Nunca añadir --remote ni URLs externas. Consultar supabase/README para CLI 2 y seguridad de salidas.
 
 Cierre operativo: supabase stop ejecutado con exit 0; ningún contenedor activo después de detener el stack. Volúmenes locales conservados, sin operaciones remotas. Check final: 27 archivos sin diagnósticos.
+
+## Aprobación formal y publicación — 2026-11-06
+
+El usuario comunicó que el orquestador externo revisó `CP003A_REVIEW.patch` y **APPROVED CP-003A: implementación y validación de seguridad local únicamente**, sobre `47f04dc426d7083d86811a57dab7894876b8038a`. Los estados anteriores de pendiente/no aprobado son históricos. CP-003 completo y la integración remota no quedan aprobados por este dictamen.
+
+Se conservan los resultados auténticos anteriores (53/53 SQL/RLS sin omisiones, REST 7/7, seed idempotente, check/lint/31 tests/seed:check/build PASS); no se ejecutan nuevamente en este cambio documental. Permanecen los límites de taxonomía/portada DEMO, accesibilidad heredada y compatibilidad CLI 2 no ejecutada. Ningún resultado local acredita configuración remota.
+
+La autorización actual permite commit de ESTADO y este handoff, push normal de cp-003-supabase y PR hacia main sin merge. Ambos `.env.example` premodificados se preservan exactamente y no se versionan sus cambios; tampoco se incorpora `CP003A_REVIEW.patch`, entornos reales ni secretos. Se comprueba el diff antes de publicar; SHA/PR efectivos se reportan al finalizar. No se modifica aplicación, migración, seed, dependencias ni pruebas.
+
+**No autoriza SQL/migraciones Supabase remotos, operaciones linked, cuentas/admins reales, despliegue, CP-003B ni CP-004. Detenerse tras publicación y esperar al orquestador.**

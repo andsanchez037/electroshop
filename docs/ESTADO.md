@@ -2,15 +2,15 @@
 
 **Última actualización:** 2026-11-06
 
-**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A pendiente de revisión del orquestador: validación local PASS, **53/53 SQL/RLS**, cero fallos/omisiones; REST anon 7/7 y seed idempotente. No aprobado automáticamente ni aplicado remotamente. Ver entrada 2026-11-06; los bloqueos anteriores son históricos.
+**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A **APPROVED (implementación y validación local únicamente)** por el orquestador externo, según comunicación del usuario tras revisar CP003A_REVIEW.patch. Evidencia aprobada: **53/53 SQL/RLS**, cero fallos/omisiones; REST anon 7/7 y seed idempotente. Remoto sin aplicar; CP-003B/CP-004 no autorizados. Los bloqueos y estados de revisión anteriores son históricos.
 
-**Bloqueos inmediatos CP-003A:** ninguno para validación local. Integración remota y aprobación esperan revisión y nueva autorización; credenciales locales no se imprimen ni versionan.
+**Bloqueos inmediatos CP-003A:** ninguno; implementación y validación local aprobadas. Integración remota espera revisión y nueva autorización; credenciales locales no se imprimen ni versionan.
 
 | CP | Estado | Ejecutor | Resultado |
 |---|---|---|---|
 | CP-001 | Archivado | equipo | `index_elec.html` guardado sin uso en producción |
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
-| CP-003 | CP-003A REVIEW / LOCAL PASS | Codex | 53/53 pgTAP, REST 7/7, seed idempotente; remoto sin aplicar |
+| CP-003 | CP-003A **APPROVED (solo local)** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP, REST 7/7, seed idempotente; remoto sin aplicar; CP-003 completo no cerrado |
 | CP-004 | WAITING | Codex | Espera admin de prueba |
 | CP-005 | WAITING | Codex | Espera aprobación |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
@@ -145,3 +145,12 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Archivos: tests SQL; scripts test-db, db-test-results y validate-db-local; test db-test-results.test.ts; documentación PROJECT, README, supabase/README, ESTADO y HANDOFF. No nuevas dependencias ni cambios de código UI/datos CP-002. Las dos plantillas de entorno del usuario y `.env.local` se conservan sin stage; `.env.local` sigue ignorado/no versionado.
 - Alcance: ninguna llamada SQL remota, db push, --linked, cuenta real, push GitHub, merge, despliegue ni CP-003B/CP-004. CP-003A queda pendiente del orquestador; el PASS local no equivale a aprobación ni demuestra configuración remota.
 - Cierre operativo: `supabase stop` PASS (exit 0); Docker sin contenedores activos después de la parada. No se borraron volúmenes ni se publicaron resultados remotos. Check final repetido sobre todos los scripts: 27 archivos, cero diagnósticos.
+
+### 2026-11-06 — CP-003A / APPROVED (SOLO LOCAL) — PUBLICACIÓN AUTORIZADA
+
+- El usuario comunica aprobación explícita del orquestador externo tras revisar `CP003A_REVIEW.patch`. Fuente aprobada: `47f04dc426d7083d86811a57dab7894876b8038a`, rama `cp-003-supabase`; se verificó HEAD y el commit documental previo `047ea71`. La aprobación cubre implementación y validación local, no integración remota ni CP-003 completo.
+- Evidencia aprobada, ejecutada en la tarea anterior: 53/53 SQL/RLS sin fallos/SKIP/TODO/faltantes; REST anon 7/7; dos repeticiones del seed con datos/UUIDs idénticos; check/lint/31 tests/seed:check/build PASS. No se repiten pruebas en este cierre exclusivamente documental ni se presentan como ejecución nueva.
+- Solo se modifican y versionan docs/ESTADO.md y docs/CP003A_HANDOFF.md. Se preservan byte a byte los cambios previos de ambas plantillas `.env.example`; permanecen fuera del índice. `CP003A_REVIEW.patch` queda local, sin seguimiento y sin stage. Entornos reales/credenciales/artefactos no se incorporan.
+- Publicación autorizada: commit documental, push normal de cp-003-supabase a origin y PR dirigido a main; resultado y SHA se informan después de verificarlos. Sin force push, merge automático, SQL Supabase remoto, migraciones remotas, operaciones linked, cuentas/admins reales, despliegue, CP-003B ni CP-004.
+- Límites no bloqueantes: validación ejecutada solo con CLI 3/Windows y PostgreSQL local; rama CLI 2 no ejecutada; taxonomía de cuatro categorías y destacados DEMO estáticos; límites de accesibilidad heredados. La configuración/gateway remotos requieren revisión y autorización posterior. PROJECT y los informes previos conservan estados de la entrega anterior; este registro documenta el nuevo dictamen local.
+- Estado final de checkpoint: CP-003A APPROVED solo local. Detenerse tras publicación y esperar nueva autorización del orquestador.
