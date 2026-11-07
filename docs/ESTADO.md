@@ -1,16 +1,16 @@
 # ESTADO.md — bitácora de ejecución y revisión
 
-**Última actualización:** 2026-10-26
+**Última actualización:** 2026-11-06
 
-**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A NO APROBADO: revisión estática externa sin escalación confirmada (comunicada por usuario); validación local **BLOCKED_EXTERNAL**, Docker Desktop/motor y Supabase CLI no disponibles. Las 53 aserciones SQL/RLS siguen NOT EXECUTED.
+**Estado general:** CP-002 **APPROVED / integrado en main**. CP-003A pendiente de revisión del orquestador: validación local PASS, **53/53 SQL/RLS**, cero fallos/omisiones; REST anon 7/7 y seed idempotente. No aprobado automáticamente ni aplicado remotamente. Ver entrada 2026-11-06; los bloqueos anteriores son históricos.
 
-**Bloqueos inmediatos CP-003A:** faltan Supabase CLI, Docker y PostgreSQL locales para ejecutar SQL/pgTAP. La integración remota espera revisión y nueva autorización; credenciales locales no se imprimen ni versionan.
+**Bloqueos inmediatos CP-003A:** ninguno para validación local. Integración remota y aprobación esperan revisión y nueva autorización; credenciales locales no se imprimen ni versionan.
 
 | CP | Estado | Ejecutor | Resultado |
 |---|---|---|---|
 | CP-001 | Archivado | equipo | `index_elec.html` guardado sin uso en producción |
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
-| CP-003 | CP-003A REVIEW / BLOCKED_EXTERNAL (DB) | Codex | Fundación SQL/adaptador preparados; RLS no ejecutado por falta de servicios locales; remoto sin aplicar |
+| CP-003 | CP-003A REVIEW / LOCAL PASS | Codex | 53/53 pgTAP, REST 7/7, seed idempotente; remoto sin aplicar |
 | CP-004 | WAITING | Codex | Espera admin de prueba |
 | CP-005 | WAITING | Codex | Espera aprobación |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
@@ -131,3 +131,17 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Frontend check/lint/test/build: NOT RUN en este intento debido a la instrucción de parar si faltan herramientas. Los PASS anteriores son históricos, no evidencia nueva. Se modifica solo documentación: docs/ESTADO.md y docs/CP003A_HANDOFF.md; sin cambios de código, SQL, configuración ni dependencias. Commit local documental, no push.
 - Acción humana requerida: instalar Docker Desktop para Windows desde el instalador oficial, completar habilitación WSL2/virtualización o reinicio si lo solicita, abrir Docker Desktop con motor Linux y esperar a que esté operativo. En una terminal nueva comprobar docker --version y docker version --format '{{.Server.Os}} {{.Server.Version}}' (debe mostrar linux y versión del servidor). Si ya existe en otra ruta, facilitarla/hacerla accesible a la sesión. Después solicitar reanudación para preparar CLI oficial y ejecutar el protocolo local. No compartir claves ni salida sensible de Supabase.
 - Evidencia ampliada y pasos exactos: sección final de docs/CP003A_HANDOFF.md. Esperar disponibilidad de herramientas e instrucción; sin push, merge, despliegue, CP-003B ni CP-004. CP-003A sigue NO APROBADO.
+
+### 2026-11-06 — CP-003A / LOCAL PASS — PENDIENTE DE REVISIÓN
+
+- Rama `cp-003-supabase`; HEAD de partida `047ea71e5e557f977b7d499d65e50a1f861bdd3b` (commit documental local, encima de la implementación `6387a5e6c7d7a6d142e5d995728553687675dc5b`). Sin fetch/push ni operaciones Git remotas. Ambos `.env.example` ya modificados se preservan byte a byte y quedan fuera del índice.
+- Herramientas comprobadas: Docker contexto desktop-linux, endpoint local npipe, servidor Linux 29.9.2; Supabase CLI 3.0.0 instalada mediante Scoop, manifest apunta a release oficial supabase/cli; PostgreSQL local 17.11. El PATH de esta sesión se amplió solamente en proceso con DockerDesktop/resources/bin y scoop/shims. Primera llamada CLI dentro del sandbox falló al escribir telemetría local; se repitió con permisos de ejecución y sin mostrar credenciales. No se instaló software del sistema.
+- `supabase start`: PASS (exit 0), descarga de imágenes de contenedores y stack exclusivamente local. `supabase db reset --yes`: PASS (exit 0), aplicó `20261026000100_catalog_security.sql` y `seed.sql` en la base desechable. CLI 3 elimina `--local`; la ayuda instalada confirma destino local por defecto y requiere `--remote` para otro destino. No se pasó ninguna opción remota, URL de base ni vínculo de proyecto.
+- Primera ejecución SQL: FAIL real, 30/53 ejecutadas sin fallos de aserción antes de error de sintaxis: CTE modificador anidado en argumento de pgTAP. Corregidas cuatro consultas de prueba para colocar WITH al nivel superior. Sin cambios en migración, seed, policies, grants, aplicación ni dependencias.
+- Runner `web/scripts/test-db.mjs`: exige CLI 2/3, Docker Linux con endpoint local verificable, no acepta argumentos/destinos; usa ejecutables Windows sin shell. CLI 3 usa destino local por defecto; CLI 2 conserva --local (rama 2 no ejecutada aquí). Exige resumen de un archivo/53 tests/PASS y verifica además TAP completo mediante segunda ejecución transaccional con psql dentro del contenedor local fijo. Plan explícito 1..53, secuencia completa y rechazo de fallos/SKIP/TODO; no registra salida arbitraria de herramientas. Compatibilidad Windows real validada con CLI 3.0.0/Scoop y Docker Desktop.
+- `npm.cmd run test:db`: PASS final y repetido tras idempotencia; 53/53 en pg_prove y 53/53 en verificación TAP independiente en cada invocación, cero failures, cero skips, cero TODO, cero faltantes. Son las mismas 53 aserciones únicas repetidas, no 106 casos distintos. Cubren anon, usuario común, metadata falsa, admin CRUD, revocación, membresías protegidas, grants, RLS y constraints. Fixtures sin cuentas reales; rollback y comprobación posterior de 0 auth.users/0 admin_users.
+- `node scripts/validate-db-local.mjs` desde web: PASS. Seed repetido dos veces, comparación exacta de todas las columnas y UUIDs contra snapshot inicial, 16 productos/4 categorías sin cambios, cero usuarios/admins. REST anon local: 7/7 PASS (GET products 200/16, GET categories 200/4, POST/PATCH/DELETE products denegados 401/403, lectura de admin_users y autoasignación denegadas). Snapshot final intacto. Usa credencial anon de status local únicamente en memoria; nunca muestra claves, status completo ni datos sensibles.
+- Frontend ejecutado desde web: check PASS (27 archivos, 0 errores/warnings/hints); lint PASS; tests PASS (5 archivos, 31/31, incluidos 27 existentes y 4 regresiones de verificación TAP/endpoints); seed:check PASS; build PASS (5 páginas). Primer lint falló por globales Node de los scripts nuevos, corregidos con import URL/globalThis; se repitieron lint/test/seed:check/build con exit 0. No smoke nuevo ni auditoría npm nueva.
+- Archivos: tests SQL; scripts test-db, db-test-results y validate-db-local; test db-test-results.test.ts; documentación PROJECT, README, supabase/README, ESTADO y HANDOFF. No nuevas dependencias ni cambios de código UI/datos CP-002. Las dos plantillas de entorno del usuario y `.env.local` se conservan sin stage; `.env.local` sigue ignorado/no versionado.
+- Alcance: ninguna llamada SQL remota, db push, --linked, cuenta real, push GitHub, merge, despliegue ni CP-003B/CP-004. CP-003A queda pendiente del orquestador; el PASS local no equivale a aprobación ni demuestra configuración remota.
+- Cierre operativo: `supabase stop` PASS (exit 0); Docker sin contenedores activos después de la parada. No se borraron volúmenes ni se publicaron resultados remotos. Check final repetido sobre todos los scripts: 27 archivos, cero diagnósticos.

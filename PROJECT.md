@@ -1,6 +1,6 @@
 # Electro Shop — PROJECT.md (fuente de verdad para Codex)
 
-**Actualización:** 26 de octubre de 2026 · **Estado:** CP-002 APPROVED e integrado en main; CP-003A implementado para revisión, PostgreSQL/RLS BLOCKED_EXTERNAL
+**Actualización:** 6 de noviembre de 2026 · **Estado:** CP-002 APPROVED e integrado en main; CP-003A validado localmente (53/53 SQL/RLS), pendiente de revisión; remoto no aplicado
 
 **Propósito:** prototipo universitario **no comercial** de un catálogo de electrónica con administración segura.
 
@@ -100,7 +100,7 @@ Los requisitos siguientes se conservan como referencia del alcance aprobado:
 
 ### CP-003 — Supabase (schema, datos, RLS) **(CP-003A EN REVISIÓN; SQL REMOTO NO AUTORIZADO)**
 
-**Subfase autorizada CP-003A:** rama `cp-003-supabase` desde main actualizado `ddb22b954bfe391349475a2ad6b4476e03cc464f`. Tablas/constraints/grants/RLS, seed reproducible, pgTAP y adaptador tipado de lectura preparados. Pruebas PostgreSQL/RLS BLOCKED_EXTERNAL: faltan Supabase CLI/Docker locales. Frontend conserva demo por defecto; Supabase exige selección explícita y propaga errores sin fallback. No se ejecutó SQL remoto ni se crearon cuentas/admins reales. Detalle: `docs/CP003A_HANDOFF.md` y `supabase/README.md`. CP-003 completo todavía NO aceptado; CP-004 no iniciado.
+**Subfase autorizada CP-003A:** rama `cp-003-supabase` desde main actualizado `ddb22b954bfe391349475a2ad6b4476e03cc464f`. Tablas/constraints/grants/RLS, seed reproducible, pgTAP y adaptador tipado preparados. Validación local 2026-11-06: PostgreSQL/RLS 53/53 PASS sin omisiones, REST anon 7/7 y seed idempotente. Frontend conserva demo por defecto; Supabase exige selección explícita y propaga errores sin fallback. No se ejecutó SQL remoto ni se crearon cuentas/admins reales; solo fixtures transaccionales locales. Detalle: `docs/CP003A_HANDOFF.md` y `supabase/README.md`. CP-003A espera dictamen del orquestador; CP-003 completo todavía NO aceptado; CP-004 no iniciado.
 
 **Antes:** usuario crea proyecto Free y prepara URL + publishable key en `.env.local`, siguiendo `REQUISITOS_EXTERNOS.md`. Si no están listas las cuentas, Codex solo genera SQL/migraciones y pruebas, sin declarar integración real completada.
 
@@ -160,7 +160,7 @@ Protocolo de revisión: el usuario comparte enlace a PR, diff, árbol de archivo
 |---|---|---|---|
 | CP-001 | Vibecode HTML original | **Archivado** | Ninguna |
 | CP-002 | Astro + home + catálogo demo | **APPROVED / cerrado por aprobación comunicada por el usuario** | Ninguna pendiente para el cierre |
-| CP-003 | Supabase SQL, RLS y catálogo persistente | **CP-003A en revisión / RLS BLOCKED_EXTERNAL; no aplicado remotamente** | Supabase CLI + Docker locales para tests; posterior autorización de SQL remoto |
+| CP-003 | Supabase SQL, RLS y catálogo persistente | **CP-003A en revisión / validación local PASS; no aplicado remotamente** | Revisión del orquestador y posterior autorización de SQL remoto |
 | CP-004 | Login real + CRUD admin | **Pendiente** | Usuario admin de prueba |
 | CP-005 | Carrito/pedido simulado | **Pendiente** | Ninguna adicional |
 | CP-006 | Netlify y demo pública | **Pendiente** | GitHub + Netlify |

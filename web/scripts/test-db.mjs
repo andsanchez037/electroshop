@@ -1,28 +1,37 @@
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { URL } from 'node:url';
+﻿import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath, URL } from 'node:url';
 import process from 'node:process';
+import { completeSummary, completeTap, isLocalDocker } from './db-test-results.mjs';
 
-const available = name => spawnSync(name, ['--version'], { encoding: 'utf8', windowsHide: true, stdio: 'pipe' }).status === 0;
-if (!available('supabase') || !available('docker')) {
-  globalThis.console.error('BLOCKED_EXTERNAL: pruebas RLS sin ejecutar. Requieren Supabase CLI y Docker locales; no se intentó conexión remota.');
-  process.exitCode = 2;
-} else {
-  if (spawnSync('docker', ['info', '--format', '{{.ServerVersion}}'], { stdio: 'pipe', windowsHide: true }).status !== 0) {
-    globalThis.console.error('BLOCKED_EXTERNAL: Docker local no está disponible. No se ejecutó SQL.');
-    process.exit(2);
-  }
-  // Sin --linked ni --db-url; no aceptar argumentos para apuntar a otra base.
-  const result = spawnSync('supabase', ['test', 'db', '--local', '--workdir', fileURLToPath(new URL('../../', import.meta.url))],
-    { encoding: 'utf8', windowsHide: true, stdio: 'pipe' });
-  // No imprimir salida arbitraria de CLI (podría contener secretos de configuración).
-  const output = (result.stdout ?? '') + (result.stderr ?? '');
-  if (result.status === 0 && /Result:\s*PASS/i.test(output) && /Tests=[1-9]\d*/.test(output) && !/not ok|Bail out!/i.test(output)) {
-    globalThis.console.log('PASS: suite pgTAP RLS ejecutada en Supabase local.');
-  } else {
-    const blocked = /not running|connection refused|failed to connect|cannot connect/i.test(output);
-    globalThis.console.error(blocked ? 'BLOCKED_EXTERNAL: base Supabase local no disponible. No se probó el remoto.'
-      : 'FAIL: suite pgTAP local no superada o sin evidencia de tests ejecutados. Revisa la salida en una terminal segura. No se probó el remoto.');
-    process.exitCode = blocked ? 2 : 1;
-  }
+const root = fileURLToPath(new URL('../../', import.meta.url));
+const run = (name, args, input) => spawnSync(name, args, {
+  encoding: 'utf8', windowsHide: true, stdio: 'pipe', timeout: 120000,
+  maxBuffer: 4 * 1024 * 1024, input,
+});
+const stop = (message, code) => { globalThis.console.error(message); process.exit(code); };
+if (process.argv.length !== 2) stop('FAIL: este runner no acepta argumentos ni destinos.', 1);
+const version = run('supabase', ['--version']);
+const major = Number(version.stdout?.trim().match(/^(\d+)\./)?.[1]);
+if (version.status !== 0 || ![2, 3].includes(major)) {
+  stop('BLOCKED_EXTERNAL: requiere Supabase CLI oficial 2.x o 3.x (ejecutable en PATH).', 2);
 }
+// Comprobar el endpoint antes de contactar el daemon; nunca Docker remoto.
+const context = run('docker', ['context', 'inspect', '--format', '{{.Endpoints.docker.Host}}']);
+const endpoint = process.env.DOCKER_HOST || context.stdout?.trim() || '';
+if (context.status !== 0 || !isLocalDocker(endpoint)) {
+  stop('BLOCKED_EXTERNAL: se requiere un endpoint Docker local verificable.', 2);
+}
+const engine = run('docker', ['version', '--format', '{{.Server.Os}}']);
+if (engine.status !== 0 || engine.stdout.trim() !== 'linux') stop('BLOCKED_EXTERNAL: motor Docker Linux local no disponible.', 2);
+// CLI 3 eliminó --local: sin --remote el destino es exclusivamente local.
+const result = run('supabase', ['test', 'db', ...(major === 2 ? ['--local'] : []), '--workdir', root]);
+const output = (result.stdout ?? '') + (result.stderr ?? '');
+if (result.status !== 0 || !completeSummary(output)) {
+  stop('FAIL: pg_prove local no acredita exactamente 53 tests PASS sin omisiones. No se imprime salida potencialmente sensible.', 1);
+}
+// pg_prove oculta el TAP: reejecutar la transacción para verificar cada número.
+const sql = readFileSync(new URL('../../supabase/tests/database/catalog_rls.test.sql', import.meta.url), 'utf8');
+const tap = run('docker', ['exec', '-i', 'supabase_db_electroshop-local', 'psql', '-XAt', '-v', 'ON_ERROR_STOP=1', '-U', 'postgres', '-d', 'postgres'], sql);
+if (tap.status !== 0 || !completeTap(tap.stdout ?? '')) stop('FAIL: TAP local incompleto, fallido u omitido; se requieren 53/53.', 1);
+globalThis.console.log('PASS: pg_prove 53/53 y TAP independiente 53/53; cero fallos, SKIP o TODO. Solo Supabase local.');

@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select no_plan();
+select plan(53);
 
 select is((select count(*) from public.products where sku like 'ES-%'), 16::bigint, 'Seed: 16 productos CP-002');
 select is((select count(*) from public.categories), 4::bigint, 'Seed: cuatro categorías');
@@ -54,8 +54,10 @@ select ok(not electroshop_private.is_admin(), 'Metadata admin del cliente no con
 select is((select count(*) from public.products), 16::bigint, 'Usuario normal no ve inactivos');
 select is((select count(*) from public.categories), 4::bigint, 'Usuario normal no ve categorías inactivas');
 select throws_ok($$insert into public.products(sku,name,description,category_id,price_cents) values ('TEST-USER','x','x','componentes',1)$$, '42501', null::text, 'RLS bloquea INSERT normal con grant existente');
-select is((with changed as (update public.products set price_cents=0 where sku='ES-C001' returning sku) select count(*) from changed), 0::bigint, 'RLS no actualiza filas para usuario normal');
-select is((with changed as (delete from public.products where sku='ES-C001' returning sku) select count(*) from changed), 0::bigint, 'RLS no borra filas para usuario normal');
+with changed as (update public.products set price_cents=0 where sku='ES-C001' returning sku)
+select is(count(*), 0::bigint, 'RLS no actualiza filas para usuario normal') from changed;
+with changed as (delete from public.products where sku='ES-C001' returning sku)
+select is(count(*), 0::bigint, 'RLS no borra filas para usuario normal') from changed;
 select is((select price_cents from public.products where sku='ES-C001'), 3500, 'Precio original intacto');
 select throws_ok($$select * from public.admin_users$$, '42501', null::text, 'Usuario no enumera administradores');
 select throws_ok($$insert into public.admin_users(user_id) values (auth.uid())$$, '42501', null::text, 'Usuario no se asigna admin');
@@ -73,9 +75,11 @@ select ok(electroshop_private.is_admin(), 'Admin verificado desde PostgreSQL');
 select is((select count(*) from public.products), 18::bigint, 'Admin lee también productos ocultos');
 select is((select count(*) from public.categories), 5::bigint, 'Admin lee categorías ocultas');
 select lives_ok($$insert into public.products(sku,name,description,category_id,price_cents) values ('TEST-ADMIN','Producto demo','Fixture','componentes',123)$$, 'Admin inserta');
-select is((with changed as (update public.products set price_cents=456, stock_demo=2, is_active=false where sku='TEST-ADMIN' returning sku) select count(*) from changed), 1::bigint, 'Admin actualiza y desactiva');
+with changed as (update public.products set price_cents=456, stock_demo=2, is_active=false where sku='TEST-ADMIN' returning sku)
+select is(count(*), 1::bigint, 'Admin actualiza y desactiva') from changed;
 select is((select price_cents from public.products where sku='TEST-ADMIN'), 456, 'Persistió actualización del admin');
-select is((with changed as (delete from public.products where sku='TEST-ADMIN' returning sku) select count(*) from changed), 1::bigint, 'Admin borra');
+with changed as (delete from public.products where sku='TEST-ADMIN' returning sku)
+select is(count(*), 1::bigint, 'Admin borra') from changed;
 select throws_ok($$insert into public.admin_users(user_id) values ('11111111-1111-4111-8111-111111111111')$$, '42501', null::text, 'Ni admin crea administradores desde cliente');
 select throws_ok($$update public.admin_users set user_id='11111111-1111-4111-8111-111111111111'$$, '42501', null::text, 'Ni admin reemplaza membresías');
 select throws_ok($$delete from public.admin_users$$, '42501', null::text, 'Ni admin revoca membresías desde cliente');

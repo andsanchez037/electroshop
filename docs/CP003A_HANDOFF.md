@@ -1,6 +1,6 @@
 # CP-003A — handoff para revisión de seguridad
 
-**Estado: READY_FOR_REVIEW / BLOCKED_EXTERNAL (PostgreSQL/RLS). No aprobado ni aplicado remotamente.**
+**Estado vigente (2026-11-06): READY_FOR_REVIEW / LOCAL PASS. 53/53 SQL/RLS sin fallos ni omisiones, REST anon 7/7, seed idempotente. No aprobado ni aplicado remotamente.** La evidencia nueva está en la última sección; los resultados/bloqueos anteriores se conservan como historial.
 
 ## Alcance autorizado y punto de partida
 
@@ -117,3 +117,47 @@ La primera consulta PowerShell de registros mediante wildcard produjo un error d
 4. Solicitar reanudar la validación local. Con Docker disponible, podrá prepararse la CLI oficial mediante un método local soportado, dentro de la autorización dada. No se instaló CLI en este intento porque Docker ya bloquea toda la validación y el usuario pidió detenerse ante herramientas ausentes.
 
 No se solicita compartir claves ni salidas de `supabase start/status`. CP-003A continúa **NO APROBADO**. Esperar disponibilidad de herramientas e instrucción de reanudación; ninguna operación remota ni CP-003B/CP-004 está autorizada.
+
+## Validación local ejecutada — 2026-11-06 / LOCAL PASS
+
+Esta sección reemplaza el bloqueo vigente de herramientas; las secciones anteriores conservan la evidencia histórica. CP-003A **sigue pendiente de aprobación independiente**. Rama `cp-003-supabase`; partida `047ea71e5e557f977b7d499d65e50a1f861bdd3b`, sin push de este trabajo.
+
+### Entorno y frontera local
+
+Docker Desktop Linux 29.9.2, contexto desktop-linux con endpoint npipe local; CLI Supabase 3.0.0 vía Scoop (manifest de release oficial supabase/cli); PostgreSQL 17.11. No se instaló software del sistema. Se añadieron las rutas existentes de Docker y Scoop al PATH del proceso. CLI necesita poder escribir configuración/telemetría local; la primera llamada restringida falló y se repitió con permisos de ejecución. No se mostraron credenciales.
+
+La ayuda de CLI 3 confirma que `db reset` y `test db` son locales por defecto y ya no admiten `--local`; remoto requeriría `--remote`, que no se utilizó. El runner distingue CLI 2 (con --local) y 3 (local por defecto); solo CLI 3 fue ejecutada aquí. Rechaza argumentos externos y endpoints Docker remotos. No lee entornos web para conectarse a base ni API.
+
+### Resultados auténticos
+
+| Comando ejecutado | Resultado |
+| --- | --- |
+| `supabase start` (raíz) | PASS, exit 0; stack exclusivamente local, imágenes descargadas |
+| `supabase db reset --yes` (raíz, CLI 3) | PASS, exit 0; migración versionada y seed aplicados a base local desechable |
+| Primera ejecución `npm.cmd run test:db` | FAIL: 30/53 antes de error PostgreSQL de CTE modificador anidado; nunca aceptado como PASS parcial |
+| `npm.cmd run test:db` después de corrección SQL | PASS: pg_prove 53/53 y TAP independiente 53/53; cero fallos, SKIP, TODO o aserciones faltantes |
+| `node scripts/validate-db-local.mjs` (web) | PASS: seed dos veces idéntico en datos/UUIDs; REST anon 7/7; snapshots intactos; 0 usuarios y 0 admins |
+| `npm.cmd run test:db` tras repetir seed | PASS otra vez: mismas 53 aserciones completas, verificadas tanto por pg_prove como por TAP |
+| `npm.cmd run check` | PASS: 27 archivos, 0 errores/warnings/hints |
+| `npm.cmd run lint` | PASS final; corregidos globales Node de scripts nuevos tras primer FAIL |
+| `npm.cmd run test` | PASS: 31/31 en 5 archivos (27 existentes + 4 regresiones) |
+| `npm.cmd run seed:check` | PASS: coincide con los 16 productos CP-002 |
+| `npm.cmd run build` | PASS: cinco páginas estáticas |
+
+El runner repite la transacción de tests con psql local porque pg_prove oculta normalmente las líneas TAP. Verifica plan 1..53 y números consecutivos, además del resumen exacto; no cuenta las repeticiones como nuevos casos. Regresiones comprueban suite vacía/parcial/extra, plan ausente, numeración duplicada, SKIP, TODO, bailout, not ok y endpoints Docker remotos. Ejecución Windows real satisfactoria con `supabase.exe`/Scoop y docker.exe; no se usa shell para lanzar comandos desde Node.
+
+Cobertura SQL efectivamente ejecutada: RLS en las tres tablas; grants; helper SECURITY DEFINER/search_path; seed; SKU/precio/stock/FK; lectura anon activa; escritura anon denegada; usuario normal con metadata admin falsa; ausencia de sub; escritura normal denegada/cero filas; membresías privadas y autoasignación protegida; CRUD admin; revocación sin renovar JWT. Usuarios/admins son fixtures transaccionales sin contraseñas ni cuentas Auth reales; terminan en rollback.
+
+REST utiliza únicamente URL loopback validada y credencial anon del stack local en memoria. Casos: GET products 200 con 16 filas, GET categories 200 con 4; POST/PATCH/DELETE products denegados (401/403), GET admin_users y POST de autoasignación denegados. Se compara snapshot final completo. Las pruebas HTTP no crean usuarios ni administradores. Seed: dos aplicaciones adicionales del mismo SQL, comparando todas las columnas y UUIDs ordenados; no solo los recuentos.
+
+### Correcciones y límites restantes
+
+- Solo cuatro CTE de la suite SQL y plan explícito; migración, políticas y seed sin cambios. Ejecutar CTE modificadores al nivel superior evita el error de PostgreSQL.
+- Runner reforzado y nuevos scripts/regresiones de validación; ninguna dependencia nueva ni cambios de UI, estilos o funcionalidad CP-002.
+- `.env.example` y `web/.env.example` eran cambios previos del usuario: conservados byte a byte, fuera del commit. `.env.local` ignorado/no versionado. No se imprimen claves ni salida completa de start/status.
+- Taxonomía de cuatro categorías, destacados estáticos DEMO y límites heredados de accesibilidad permanecen. No se ejecutaron smoke ni audit nuevos.
+- La validación local no acredita gateway/configuración del proyecto remoto ni aprobación del orquestador. Ningún SQL remoto, enlace, db push, cuenta real, despliegue, push GitHub, merge, CP-003B o CP-004.
+
+Reproducción local con CLI 3: iniciar stack, `supabase db reset --yes` en copia desechable, y desde web ejecutar `npm.cmd run test:db`, `node scripts/validate-db-local.mjs`, otra vez `npm.cmd run test:db` y controles frontend. Nunca añadir --remote ni URLs externas. Consultar supabase/README para CLI 2 y seguridad de salidas.
+
+Cierre operativo: supabase stop ejecutado con exit 0; ningún contenedor activo después de detener el stack. Volúmenes locales conservados, sin operaciones remotas. Check final: 27 archivos sin diagnósticos.

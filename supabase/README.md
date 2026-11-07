@@ -1,5 +1,7 @@
 # CP-003A — fundación SQL, pendiente de revisión de seguridad
 
+**Validación vigente (2026-11-06): LOCAL PASS.** Docker Linux 29.9.2, CLI oficial 3.0.0 y PostgreSQL 17.11: 53/53 pgTAP sin fallos/omisiones, REST anon 7/7 e idempotencia del seed ejecutados. CP-003A no está aprobado automáticamente. Evidencia completa, fallo inicial y correcciones: [handoff](../docs/CP003A_HANDOFF.md), última sección.
+
 **No se ha aplicado ninguna migración remota. No se han creado cuentas ni administradores reales.** No ejecutar `db push`, `--linked`, `--db-url` ni SQL en el Dashboard como parte de esta entrega. Las instrucciones locales siguientes solo se usan en una instancia de desarrollo desechable.
 
 ## Archivos
@@ -38,25 +40,28 @@ admin_users tiene RLS habilitado pero ninguna política ni grant de cliente. Tam
 
 Las migraciones se aplican una vez mediante su historial versionado; no son scripts para reejecutar arbitrariamente sobre tablas existentes. Si ya existen objetos incompatibles, deben fallar y revisarse, sin ocultarlo con CREATE TABLE IF NOT EXISTS. El seed es idempotente por id/SKU: un segundo uso actualiza los mismos datos ficticios y conserva UUIDs; no borra filas extra. **Sobrescribe precio/stock/nombre de esos SKU**: solo usar como semilla de demo revisada, no como importación de inventario real.
 
-## Reproducir en Supabase LOCAL (pendiente de ejecución aquí)
+## Reproducir en Supabase LOCAL
 
 Requisitos: Docker operativo, Supabase CLI oficial y Node >=22.23.4. No se instalan ni levantan servicios automáticamente. Desde la raíz de una copia de desarrollo:
 
 ```powershell
 supabase start
-supabase db reset --local
+# CLI 3: local por defecto; NO añadir --remote.
+supabase db reset --yes
 cd web
 npm.cmd run seed:check
 npm.cmd run test:db
+node scripts/validate-db-local.mjs
+npm.cmd run test:db
 ```
 
-`db reset --local` recrea **solo la base local** y borra su contenido previo. Utilizar una instancia desechable; nunca sustituir `--local` por `--linked` o una URL remota. No copiar a chats/logs/commits la salida de `supabase start`, ya que puede mostrar claves locales. El wrapper de test usa `supabase test db --local`, sin aceptar destinos arbitrarios, no aplica migraciones y no imprime salidas que puedan contener claves. Exige código 0 y evidencia TAP de tests ejecutados; no informa PASS por ausencia de herramientas/tests.
+CLI 3 eliminó `--local`: reset/test son locales por defecto según su ayuda instalada. CLI 2 requiere `supabase db reset --local`; el runner de tests elige el argumento según versión. El reset borra el contenido local previo: utilizar una instancia desechable; nunca añadir `--remote`, `--linked` o URL de base. No copiar a chats/logs/commits la salida de start/status, que puede mostrar claves. El wrapper fija destino local, no acepta argumentos, verifica endpoint Docker local y exige un archivo/53 tests PASS más plan TAP 1..53 con cada resultado numerado, cero SKIP/TODO/fallos. Reejecuta la misma transacción por psql dentro del contenedor local para inspeccionar TAP; no aplica migraciones ni imprime salida arbitraria. Requiere ejecutables supabase y docker en PATH (Windows probado con Scoop supabase.exe). CLI 2 no fue ejecutada en esta validación.
 
-En esta máquina no se detectaron los comandos Supabase CLI, Docker ni psql. `npm.cmd run test:db` informa **BLOCKED_EXTERNAL** y código no cero. Por tanto, **políticas, sintaxis SQL sobre PostgreSQL, constraints, grants y revocación todavía NO tienen validación ejecutada contra una base**. Los tests de transporte HTTP del frontend no sustituyen pgTAP. No aprobar seguridad ni aplicar SQL remoto basándose solo en esas pruebas unitarias.
+Si faltan herramientas, el runner informa BLOCKED_EXTERNAL con código no cero. En la ejecución 2026-11-06 las herramientas están disponibles y las 53 aserciones completas pasaron sobre PostgreSQL local, también después de repetir el seed. Los tests de transporte HTTP del frontend no sustituyen pgTAP, y la validación local no acredita configuración remota ni aprobación del checkpoint.
 
 La suite SQL comprueba seed 16/4, RLS habilitado, grants, helper/search_path, unique/FK/checks, lectura pública activa, escritura anónima denegada, usuario normal con role admin en metadata, falta de sub, CRUD admin, denegación de autoasignación tanto a usuario como a admin, y revocación sin renovar JWT. Las identidades constantes son fixtures transaccionales locales sin email, contraseña ni llamadas a Auth; terminan en rollback.
 
-Para comprobar idempotencia tras revisión local, el operador puede aplicar `seed.sql` dos veces en la base local y volver a ejecutar la suite. **Ese paso no se ejecutó aquí**, ni se ejecutó ninguna migración remota.
+`node scripts/validate-db-local.mjs` repite seed.sql dos veces, compara todas las columnas y UUIDs con el snapshot inicial y exige 16 productos/4 categorías/0 usuarios/0 admins. También comprueba 7 casos REST con credencial anon exclusivamente local en memoria: dos lecturas y cinco operaciones denegadas, sin alteración de datos. Ejecutado PASS; ninguna migración remota. Este script sobrescribe los mismos SKU DEMO: solo instancia desechable.
 
 ## Alta manual del primer administrador — solo procedimiento futuro
 
