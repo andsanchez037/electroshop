@@ -44,5 +44,8 @@ export function filterProducts(source: readonly Product[], query = '', category 
 export const formatPrice = (cents: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cents / 100);
 export const productUrl = (sku: string) => `/producto?sku=${encodeURIComponent(sku)}`;
 
-// CP-002: acceso local aislado para poder sustituirlo en un checkpoint posterior.
-export async function loadProducts(): Promise<readonly Product[]> { return products; }
+// Mantiene la interfaz pública aprobada; la selección del origen se resuelve al usarla.
+export async function loadProducts(): Promise<readonly Product[]> {
+  const { loadCatalogProducts } = await import('./catalog-source');
+  return loadCatalogProducts();
+}
