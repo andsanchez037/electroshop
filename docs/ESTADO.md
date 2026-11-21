@@ -13,7 +13,7 @@
 | CP-003 | CP-003A/CP-003B **APPROVED** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP local; migración/seed remotos y frontend local aprobados; cierre documental |
 | CP-004 | **APPROVED técnicamente en LOCAL · 2026-11-21** | Orquestador externo | 69/69 pgTAP, smoke GoTrue/REST real y limpieza verificada sobre `7488efe` |
 | CP-005 | **APPROVED técnicamente en LOCAL · 2026-11-21** | Orquestador externo | `d0aeb99`, frontend 80/80 y smoke Edge DEMO. Evidencia Supabase local anterior |
-| CP-006 | WAITING | Codex | Espera GitHub/Netlify |
+| CP-006 | LOCAL PASS / REVIEW · BLOCKED_EXTERNAL para release | Codex | Build estático, smoke y Supabase desechable verificados |
 | CP-007 | OPTIONAL | Codex | Reparaciones fuera del MVP |
 
 ## Bitácora (Codex debe agregar entradas sin borrar historial)
@@ -206,3 +206,10 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Evidencia ya ejecutada: 79/79 en la implementación original y 80/80 tras la corrección. Type check, lint, consistencia del seed, build y smoke Edge DEMO a 360/1440 px **PASS** sobre la corrección. El recorrido con Supabase local, 69/69 pgTAP, Auth y limpieza de fixtures corresponden a la ejecución original de CP-005.
 - Cierre documental con revisión de diff y `git diff --check`. Se conservó la implementación aprobada y el `CP005_REVIEW.patch` sin seguimiento. Sin Web Locks, las escrituras estrictamente simultáneas siguen siendo de mejor esfuerzo. La demo no crea pedidos reales, pagos ni registros de entrega.
 - Integrar CP-004 antes de CP-005 en GitHub tras la autorización del usuario. La publicación en Netlify y las operaciones remotas requieren autorización por separado. CP-006 sigue pendiente. [CP005_CHECKPOINT.md](CP005_CHECKPOINT.md)
+
+### 2026-11-21 — CP-006 / PREPARACIÓN LOCAL PASS — REVISIÓN
+
+- Rama `cp-006-release-prep` desde `8f4bda41a1b96218b8f26f17680228c4d9cfa427`. Se agregó `netlify.toml` con base `web`, salida resuelta `web/dist` y Node 24. Los dos scripts de Edge amplían recargas, metadatos, consola y el cierre del admin ante RPC ausente. El código de aplicación, dependencias y SQL conservan CP-004 y CP-005.
+- Ejecutado en copia aislada. `npm.cmd run check` **PASS** (49 archivos, cero diagnósticos), `lint` **PASS**, `test` **PASS** (80/80 en 10 archivos), `seed:check` **PASS**, `build` **PASS** (ocho rutas por modo) y `smoke` **PASS** en Edge DEMO y con Supabase local a 360/1440 px. TOML y auditoría de ambos bundles **PASS**. Un secreto sintético se rechazó antes del build sin mostrar su valor.
+- Supabase desechable local con ambas migraciones. `npm.cmd run test:db` **PASS** (69/69), `test:admin:local` **PASS** (GoTrue y REST/RLS reales), `test:admin:browser` **PASS** (RPC ausente y recuperación con transporte sintético). Limpieza verificada y stack detenido con su volumen conservado.
+- **BLOCKED_EXTERNAL para integración, publicación y verificación pública.** CP-004/005 están en GitHub y pendientes de merge. Con la automatización reportada, fusionar CP-004 en `main` puede aplicar la RPC y desplegar Netlify. Validar ajustes efectivos y coordinar ambas autorizaciones antes de tocar el remoto. Entrega local para revisión independiente, sin avance a CP-007. [Checklist CP-006](CP006_RELEASE_CHECKLIST.md) · [Handoff CP-006](CP006_HANDOFF.md)

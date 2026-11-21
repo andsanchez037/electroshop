@@ -17,6 +17,8 @@ const row = { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', sku: 'QA-001', name: '
 const accessTokens = new Map();
 const refreshTokens = new Map();
 let member = true;
+let rpcAvailable = false;
+let privilegedReads = 0;
 let phase = 'arranque';
 const jwt = exp => ['{"alg":"HS256","typ":"JWT"}', JSON.stringify({ exp, nonce: randomUUID() }), 'synthetic']
   .map(value => Buffer.from(value).toString('base64url')).join('.');
@@ -72,7 +74,10 @@ try {
     if (url.pathname === '/auth/v1/user') return identity ? respond(identity) : respond({}, 401);
     if (url.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers });
     const allowed = identity === admin && member;
-    if (url.pathname.endsWith('/rpc/current_user_is_admin')) return respond(allowed);
+    if (url.pathname.endsWith('/rpc/current_user_is_admin')) {
+      return rpcAvailable ? respond(allowed) : respond({ code: 'PGRST202', message: 'Synthetic missing RPC' }, 404);
+    }
+    if (url.pathname.endsWith('/products') || url.pathname.endsWith('/categories')) privilegedReads++;
     if (allowed && url.pathname.endsWith('/products')) return respond([row], 200, { 'content-range': '0-0/1' });
     if (allowed && url.pathname.endsWith('/categories')) return respond([{ id: 'componentes', name: 'Componentes', is_active: true }]);
     return respond({}, 403);
@@ -89,11 +94,17 @@ try {
   const first = await context.newPage();
   await first.clock.install();
   const second = await context.newPage();
-  phase = 'inicio independiente y copia por opener';
+  phase = 'RPC ausente y reintento';
   await first.goto(site + '/admin');
   await second.goto(site + '/admin');
   await login(first, 'admin@example.test');
+  await heading(first, 'No pudimos verificar la administración').waitFor();
+  assert.equal(privilegedReads, 0);
+  assert.equal(await first.getByRole('button', { name: 'Nuevo producto', exact: true }).count(), 0);
+  rpcAvailable = true;
+  await first.getByRole('button', { name: 'Reintentar acceso', exact: true }).click();
   await heading(first, row.name).waitFor();
+  phase = 'inicio independiente y copia por opener';
   await heading(second, 'Iniciar sesión').waitFor();
   const [copy] = await Promise.all([first.waitForEvent('popup'), first.evaluate(() => { globalThis.open('/admin'); })]);
   await heading(copy, 'Iniciar sesión').waitFor();
@@ -143,7 +154,7 @@ try {
   await second.reload();
   await heading(second, 'Iniciar sesión').waitFor();
   assert.equal(await second.evaluate(key => globalThis.sessionStorage.getItem(key) === null, storageKey), true);
-  globalThis.console.log('PASS: Edge/SDK con API sintética. Dos pestañas, copia de storage, login/logout aislados, renovación y borrador, recarga, revocación y expiración.');
+  globalThis.console.log('PASS: Edge/SDK con API sintética. RPC ausente sin lecturas privilegiadas y reintento. Dos pestañas, copia de storage, login/logout aislados, renovación y borrador, recarga, revocación y expiración.');
 } catch {
   globalThis.console.error(`FAIL: prueba de navegador en fase «${phase}». Salida de sesión omitida.`);
   process.exitCode = 1;
