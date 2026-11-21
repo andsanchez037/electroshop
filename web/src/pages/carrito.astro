@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CartPage from '../components/cart/CartPage';
+---
+<Layout title="Carrito" description="Revisa los productos y cantidades de tu carrito de demostración.">
+  <section class="container section shop-page">
+    <CartPage client:only="react"><p slot="fallback" role="status">Cargando carrito…</p></CartPage>
+    <noscript><p class="notice">Activa JavaScript para consultar el carrito.</p></noscript>
+  </section>
+</Layout>

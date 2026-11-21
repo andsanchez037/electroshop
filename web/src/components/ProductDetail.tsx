@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { categories, loadProducts, normalize, formatPrice, type Product } from '../data/catalog';
 import ProductArt from './ProductArt';
+import { AddToCart } from './cart/CartControls';
 
 export default function ProductDetail({ loader = loadProducts }: { loader?: () => Promise<readonly Product[]> }) {
   const [product, setProduct] = useState<Product | undefined>();
@@ -32,10 +33,7 @@ export default function ProductDetail({ loader = loadProducts }: { loader?: () =
       <p className="detail-price">{formatPrice(product.price_cents)} <span>MXN · precio demo</span></p>
       <p>{product.description}</p>
       <p className="stock">{product.stock_demo ? `${product.stock_demo} unidades de stock demo` : 'Sin stock demo'}</p>
-      <label htmlFor="quantity">Cantidad de referencia</label>
-      <input id="quantity" type="number" min="1" max={product.stock_demo || 1} defaultValue="1" disabled={!product.stock_demo} className="quantity" aria-describedby="cart-note" />
-      <button className="button cart-button" disabled aria-describedby="cart-note">Agregar al carrito · próximamente</button>
-      <p id="cart-note" className="notice">DEMO / NO ES UNA COMPRA REAL. El carrito aún no está disponible; aquí no se guarda ninguna selección ni se procesa un pedido.</p>
+      <AddToCart key={product.sku} product={product} />
     </div>
   </article>;
 }

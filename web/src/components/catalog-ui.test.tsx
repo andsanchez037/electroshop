@@ -5,6 +5,8 @@ import axe from 'axe-core';
 import Catalog from './Catalog';
 import ProductDetail from './ProductDetail';
 
+// Real-browser smoke covers these rules, which need CSS and a canvas.
+const jsdomAxeRules = { 'color-contrast': { enabled: false }, 'label-content-name-mismatch': { enabled: false } };
 afterEach(() => { cleanup(); window.history.replaceState({}, '', '/'); });
 
 describe('Catálogo interactivo', () => {
@@ -14,11 +16,11 @@ describe('Catálogo interactivo', () => {
     await screen.findByText('16 de 16 productos');
     await user.selectOptions(screen.getByLabelText('Categoría'), 'componentes');
     await user.click(screen.getByLabelText('Solo disponibles demo'));
-    expect(screen.getByRole('status').textContent).toBe('3 de 16 productos');
+    expect(screen.getByText('3 de 16 productos')).toBeTruthy();
     await user.type(screen.getByLabelText('Nombre o SKU'), 'inexistente');
     expect(screen.getByText('No encontramos coincidencias')).toBeTruthy();
     await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' })[0]!);
-    expect(screen.getByRole('status').textContent).toBe('16 de 16 productos');
+    expect(screen.getByText('16 de 16 productos')).toBeTruthy();
   });
   it('recibe búsqueda y categoría desde la navegación', async () => {
     window.history.replaceState({}, '', '/catalogo?q=es-d001&categoria=desarrollo');
@@ -43,20 +45,20 @@ describe('Catálogo interactivo', () => {
   it('no presenta infracciones automatizables básicas de accesibilidad', async () => {
     const { container } = render(<main><h1>Catálogo</h1><Catalog /></main>);
     await screen.findByText('16 de 16 productos');
-    const result = await axe.run(container, { rules: { 'color-contrast': { enabled: false } } });
+    const result = await axe.run(container, { rules: jsdomAxeRules });
     expect(result.violations).toEqual([]);
   });
 });
 
 describe('Ficha por SKU', () => {
-  it('muestra precio, stock, cantidad y carrito honestamente deshabilitado', async () => {
+  it('muestra precio, stock, cantidad y permite agregar al carrito', async () => {
     window.history.replaceState({}, '', '/producto?sku=es-d001');
     const { container } = render(<main><ProductDetail /></main>);
     await screen.findByRole('heading', { name: 'Placa de desarrollo Nova' });
     expect(screen.getByText('8 unidades de stock demo')).toBeTruthy();
-    expect(screen.getByLabelText('Cantidad de referencia').getAttribute('max')).toBe('8');
-    expect(screen.getByRole('button', { name: /Agregar al carrito/ }).hasAttribute('disabled')).toBe(true);
-    const result = await axe.run(container, { rules: { 'color-contrast': { enabled: false } } });
+    expect(screen.getByLabelText(/Cantidad de Placa/).getAttribute('max')).toBe('8');
+    expect(screen.getByRole('button', { name: /Agregar al carrito/ }).hasAttribute('disabled')).toBe(false);
+    const result = await axe.run(container, { rules: jsdomAxeRules });
     expect(result.violations).toEqual([]);
   });
   it('maneja SKU inválido con enlace para volver', async () => {
@@ -69,6 +71,6 @@ describe('Ficha por SKU', () => {
     window.history.replaceState({}, '', '/producto?sku=ES-C003');
     render(<ProductDetail />);
     await screen.findByText('Sin stock demo');
-    expect(screen.getByLabelText('Cantidad de referencia').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByLabelText(/^Cantidad de /).hasAttribute('disabled')).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 # Electro Shop — PROJECT.md (fuente de verdad para Codex)
 
-**Actualización:** 21 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-004 en segunda revisión tras las correcciones locales de sesión. RPC remota y publicación pendientes.
+**Actualización:** 21 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-005 implementado y validado localmente, pendiente de revisión independiente. La RPC remota de CP-004 y la publicación están pendientes.
 
 **Propósito:** prototipo universitario **no comercial** de un catálogo de electrónica con administración segura.
 
@@ -10,7 +10,7 @@
 
 1. Leer `AGENTS.md` antes de desarrollar; después este `PROJECT.md` y `docs/ESTADO.md`.
 2. Para tareas manuales externas, leer `REQUISITOS_EXTERNOS.md`. NO inventar cuentas, credenciales ni accesos.
-3. Usar `docs/CODEX_START.md` como referencia de los prompts por fase. CP-002 está APPROVED; no volver a ejecutarlo. El usuario autorizó CP-004 completo solo local (código/tests/commit), sin escrituras remotas, push, PR, merge ni deploy. No iniciar CP-005.
+3. Usar `docs/CODEX_START.md` como referencia histórica de prompts. CP-002 está APPROVED. El usuario autorizó CP-005 local desde el commit verificado de CP-004 y reservó publicación, operaciones remotas y CP-006 para revisiones posteriores.
 4. La estructura de referencia funcional es https://www.dipmecatronica.com (búsqueda, categorías, productos, carrito), **no** una licencia para copiar su HTML, textos, logo, imágenes o bases de datos. Rediseñar con identidad Electro Shop.
 5. Paleta orientativa recuperada del prototipo: `#121214` carbón, `#a855f7` violeta, blanco y grises. Rescatar únicamente la paleta y el concepto visual; **no** llevar el `index_elec.html` al código productivo.
 6. **Stack operativo para el MVP:** Astro (sitio estático) + islas React + TypeScript estricto + Tailwind compilado + Vitest y/o herramientas de test adecuadas; Git/GitHub; Netlify Free; Supabase PostgreSQL + Auth y RLS. Firebase Firestore **solo alternativa si el equipo cambia esta decisión**. No implementar ambos.
@@ -117,8 +117,9 @@ Autorización local comunicada por el usuario en el prompt CP-004: rama cp-004-a
 
 **Aceptar si:** invitado/cliente normal no puede realizar CREATE/UPDATE/DELETE ni llamando directamente a API; admin autorizado sí. Demostrar con pruebas automáticas RLS + manuales o reportar bloqueos. Nunca confiar en una ruta oculta como seguridad.
 
-### CP-005 — Carrito y pedido simulado **(ESPERAR APROBACIÓN)**
-**Implementar Codex:** agregar/editar/eliminar líneas, cantidades válidas, resumen MXN, persistencia local (`localStorage`) con manejo seguro, estado vacío y confirmación marcada **`DEMO: no se procesó compra ni pago`**. No persistir solicitudes anónimas en base de datos sin diseño anti-spam y aprobación. Fotos únicamente autorizadas.
+### CP-005 — Carrito y pedido simulado **(IMPLEMENTADO LOCAL / EN REVISIÓN)**
+
+`/carrito` comparte selección por SKU con catálogo, ficha y contador del encabezado. `/checkout` ofrece revisión, entrega o recogida y comprobante temporal. Se revalidan existencias y precios actuales vía el adaptador activo. Solo SKU/cantidad se guardan localmente. Los datos de entrega y el comprobante permanecen en memoria. [CP005_HANDOFF.md](docs/CP005_HANDOFF.md)
 
 **Aceptar si:** carrito respeta SKU/id y no duplica por error, precio en centavos no pierde precisión, total se recalcula, funciona en móvil, cero integraciones de cobro y pruebas pasan.
 
@@ -166,7 +167,7 @@ Protocolo de revisión: el usuario comparte enlace a PR, diff, árbol de archivo
 | CP-002 | Astro + home + catálogo demo | **APPROVED / cerrado por aprobación comunicada por el usuario** | Ninguna pendiente para el cierre |
 | CP-003 | Supabase SQL, RLS y catálogo persistente | **CP-003A/CP-003B APPROVED; catálogo remoto y frontend local verificados** | Netlify y CP-004 requieren autorización posterior |
 | CP-004 | Login real + CRUD admin | **Implementación LOCAL en revisión** | Aprobar RPC remota, identidad/admin controlados y publicación por separado |
-| CP-005 | Carrito/pedido simulado | **Pendiente** | Ninguna adicional |
+| CP-005 | Carrito/pedido simulado | **Implementación local en revisión** | Aprobación externa del checkpoint |
 | CP-006 | Netlify y demo pública | **Pendiente** | GitHub + Netlify |
 | CP-007 | Reparaciones | **Opcional / pospuesto** | Por definir |
 

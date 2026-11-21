@@ -2,11 +2,14 @@ import { createServer } from 'node:http';
 import { readFile, mkdir, stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import assert from 'node:assert/strict';
+import process from 'node:process';
 import { chromium } from 'playwright-core';
 import axe from 'axe-core';
+import { exerciseShopping } from './shopping-smoke.mjs';
 
 // Servidor estático exclusivo del test. No despliega ni contacta servicios externos.
 const root = resolve('dist');
+const localSupabase = process.argv.includes('--supabase-local');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const server = createServer(async (request, response) => {
   try {
@@ -27,6 +30,12 @@ try {
   browser = await chromium.launch({ channel: 'msedge', headless: true });
   const page = await browser.newPage();
   const errors = [];
+  await page.route('**/*', route => {
+    const url = new globalThis.URL(route.request().url());
+    const allowed = url.origin === 'http://127.0.0.1:4322' ||
+      (localSupabase && url.origin === 'http://127.0.0.1:54321' && url.pathname === '/rest/v1/products');
+    return allowed ? route.continue() : route.abort();
+  });
   page.on('pageerror', error => errors.push(error.message));
   await mkdir('../docs/evidencia/CP-002', { recursive: true });
   for (const width of [360, 1440]) {
@@ -61,7 +70,7 @@ try {
   await page.getByText('16 de 16 productos').waitFor();
   await page.getByRole('link', { name: /Placa de desarrollo Nova/ }).click();
   await page.getByRole('heading', { name: 'Placa de desarrollo Nova' }).waitFor();
-  assert.equal(await page.getByRole('button', { name: /Agregar al carrito/ }).isDisabled(), true);
+  assert.equal(await page.getByRole('button', { name: /Agregar al carrito/ }).isEnabled(), true);
   await page.reload();
   await page.getByRole('heading', { name: 'Placa de desarrollo Nova' }).waitFor();
   await page.goto('http://127.0.0.1:4322/producto?sku=INVALIDO');
@@ -70,6 +79,7 @@ try {
   await page.getByRole('heading', { name: 'Esta conexión no existe.' }).waitFor();
   assert.deepEqual(errors, [], 'Errores JS del navegador');
   globalThis.console.log('PASS: 360/1440 px, 4 rutas, axe (incluye contraste), búsqueda, filtros, SKU, recarga, teclado, 404; sin errores JS. 8 capturas.');
+  await exerciseShopping(browser, 'http://127.0.0.1:4322', localSupabase);
 } finally {
   await browser?.close();
   await new Promise(done => server.close(done));

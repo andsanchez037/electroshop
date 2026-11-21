@@ -1,0 +1,11 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Checkout from '../components/cart/Checkout';
+---
+<Layout title="Finalizar pedido DEMO" description="Simula una entrega o recolección. No se procesa ningún pago ni se envía un pedido.">
+  <section class="container section shop-page">
+    <h1 class="page-title shop-title">Finalizar pedido <span class="violet">DEMO</span></h1>
+    <Checkout client:only="react"><p slot="fallback" role="status">Cargando el pedido DEMO…</p></Checkout>
+    <noscript><p class="notice">Activa JavaScript para simular el pedido.</p></noscript>
+  </section>
+</Layout>

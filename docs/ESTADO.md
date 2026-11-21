@@ -12,7 +12,7 @@
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
 | CP-003 | CP-003A/CP-003B **APPROVED** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP local; migración/seed remotos y frontend local aprobados; cierre documental |
 | CP-004 | LOCAL / RE-REVIEW | Codex | Correcciones de Auth con regresiones frontend y de navegador. Integración actual pendiente. 69 aserciones DB en la entrega original |
-| CP-005 | WAITING | Codex | Espera aprobación |
+| CP-005 | LOCAL PASS / REVIEW | Codex | Carrito y pedido DEMO, smoke Edge y Supabase local |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
 | CP-007 | OPTIONAL | Codex | Reparaciones fuera del MVP |
 
@@ -186,3 +186,11 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Verificación desde una copia temporal aislada con Node 24.6.0 y npm 11.5.1. `npm.cmd run check` PASS (38 archivos, cero diagnósticos), `lint` PASS, `test` PASS (66/66 en ocho archivos), `seed:check` PASS (16 productos) y `build` PASS (seis rutas estáticas). `npm.cmd run smoke` PASS (cuatro rutas públicas a 360/1440 px, axe, teclado y navegación).
 - `npm.cmd run test:admin:browser` PASS en Edge con el SDK real y API sintética interceptada. Probó pestañas independientes, copia real de storage por opener, ausencia del canal Auth, login/logout independientes, renovación con borrador, recuperación al recargar, revocación y sesión expirada.
 - `npm.cmd run test:db` y `npm.cmd run test:admin:local` quedaron **BLOCKED_EXTERNAL** en preflight. El motor Docker Linux local no estaba disponible y Supabase local no estaba iniciado y migrado. El smoke REST y las 69 aserciones SQL de la entrega original siguen como evidencia histórica. No hubo operaciones en Supabase remoto, GitHub o Netlify.
+
+### 2026-11-21 — CP-005 / CARRITO Y PEDIDO DEMO — PASS LOCAL
+
+- Rama `cp-005-cart-checkout` desde `7488efe00959e233d25234c409eafe112ef7073d`. Catálogo y ficha agregan por SKU. `/carrito` concilia stock, persiste solo SKU/cantidad y sincroniza el contador. `/checkout` revisa precios y disponibilidad antes de confirmar, valida entrega ficticia y muestra un comprobante temporal. Inventario completo de archivos y límites en [CP005_HANDOFF.md](CP005_HANDOFF.md).
+- En copia aislada: `npm.cmd run check`, `npm.cmd run lint`, `npm.cmd test` (79/79 en diez archivos), `npm.cmd run seed:check` y `npm.cmd run build` (ocho rutas) **PASS**.
+- `npm.cmd run smoke` y `npm.cmd run smoke -- --supabase-local` **PASS**. Edge 360/1440 px, recorrido completo DEMO y con PostgREST local real, recarga, sincronización entre dos pestañas, stock insuficiente, entrega y recolección, axe y comprobación de red.
+- `npm.cmd run test:db` **PASS** (69/69, 53 + 16). `npm.cmd run test:admin:local` **PASS** con GoTrue/REST/RLS reales. `npm.cmd run test:admin:browser` **PASS** con SDK real y transporte sintético. El stack local conservó ambas migraciones y terminó con 4 categorías, 16 productos y cero usuarios, membresías, identidades y sesiones.
+- CP-005 queda pendiente de revisión independiente. El patch es local y se excluye del índice. Se preserva la evidencia previa no staged de CP-004. Sin operaciones remotas ni trabajo de CP-006.

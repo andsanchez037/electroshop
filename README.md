@@ -25,6 +25,8 @@ Abre http://127.0.0.1:4321. `npm.cmd` evita el bloqueo de npm.ps1 sin cambiar la
 | `/producto?sku=ES-D001` | Descripción, precio MXN, SKU, 8 unidades demo, cantidad |
 | `/producto?sku=ES-C003` | Sin stock demo, cantidad deshabilitada |
 | `/producto?sku=INVALIDO` | Producto no encontrado y enlace para volver |
+| `/carrito` | Cantidades por SKU, disponibilidad, subtotal MXN y enlace al pedido DEMO |
+| `/checkout` | Revisión, entrega simulada y confirmación temporal |
 | `/acerca` | Alcance y límites |
 | `/no-existe` | Página 404 |
 
@@ -61,7 +63,7 @@ Resultados auténticos e incidencias: [docs/ESTADO.md](docs/ESTADO.md). Las prue
 - `web/scripts/smoke.mjs`: navegador y evidencia reproducible.
 - `web/*config*`, `web/package.json`, `web/package-lock.json`: configuración y dependencias reproducibles. Testing Library, jsdom, axe y Playwright Core se usan solo para verificación.
 
-Carrito reservado para CP-005: botón deshabilitado con explicación; no guarda selección ni pedido. Cantidad únicamente de referencia. Sin login, admin simulado, Firebase ni despliegue. Sin datos personales, contactos operativos ni assets de DIP Mecatrónica. Wordmark temporal e ilustraciones SVG propias por categoría; no son fotografías de cada producto.
+En la entrega histórica CP-002, el carrito estaba deshabilitado. CP-005 agrega el flujo funcional descrito abajo. Se conservan el wordmark temporal y las ilustraciones SVG propias por categoría.
 
 La ficha estática genérica resuelve el SKU al hidratar: requiere JavaScript y ofrece aviso si está desactivado. Actualiza el título en navegador; metadatos sociales genéricos, sin URL canónica hasta disponer de dominio autorizado. Catálogo con carga, vacío y error/reintento sin retrasos artificiales.
 
@@ -109,4 +111,12 @@ Comandos desde web: `npm.cmd run check`, `npm.cmd run lint`, `npm.cmd run test`,
 
 Para repetir la prueba de dos pestañas en Edge, ejecutar `npm.cmd run test:admin:browser` desde `web` con el puerto local 4324 libre. Usa el SDK real y respuestas sintéticas interceptadas. La integración con GoTrue, PostgreSQL y REST se verifica por separado con los comandos locales del handoff.
 
-No se necesitan variables nuevas: solo las tres PUBLIC_* existentes. Mantener .env.local ignorado; nunca copiar claves/tokens a Git. Auditoría productiva histórica: 0 vulnerabilidades; auditoría completa histórica: 10 moderadas preexistentes en tooling de lint, pendientes de mantenimiento separado. CP-004 no aprobado ni publicado; CP-005 no iniciado.
+No se necesitan variables nuevas: solo las tres PUBLIC_* existentes. Mantener .env.local ignorado; nunca copiar claves/tokens a Git. Auditoría productiva histórica: 0 vulnerabilidades; auditoría completa histórica: 10 moderadas preexistentes en tooling de lint, pendientes de mantenimiento separado.
+
+## CP-005 — carrito y pedido DEMO
+
+Agrega productos desde el catálogo o la ficha. El contador del encabezado enlaza a `/carrito`, donde puedes revisar cantidades y existencias, quitar líneas o vaciar la selección con confirmación. El navegador guarda únicamente SKU y cantidad. Si el catálogo cambia, ajusta o retira las piezas afectadas. Una falla de catálogo conserva lo seleccionado y permite reintentar.
+
+En `/checkout`, elige recoger en tienda sin cargo o envío estándar simulado de $99.00 MXN. Usa datos ficticios. El formulario y el comprobante temporal viven en memoria. Confirma el pedido DEMO después de revisar el total. Antes de confirmar se consulta de nuevo el catálogo. Si cambió el precio o bajó el stock, el flujo pide una nueva revisión. Al completar se vacía el carrito. La referencia DEMO se genera en el navegador y desaparece al recargar.
+
+Para repetir el recorrido a 360 y 1440 px, ejecuta `npm.cmd run build` y `npm.cmd run smoke` desde `web` en una copia de prueba sin credenciales reales. Para Supabase, construye esa copia con los valores públicos del stack desechable en loopback y ejecuta `npm.cmd run smoke -- --supabase-local`. El detalle y los resultados están en el handoff. [CP005_HANDOFF.md](docs/CP005_HANDOFF.md)
