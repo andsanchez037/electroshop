@@ -1,17 +1,17 @@
 # ESTADO.md — bitácora de ejecución y revisión
 
-**Última actualización:** 2026-11-07
+**Última actualización:** 2026-11-21
 
-**Estado general:** CP-002/CP-003A/CP-003B APPROVED e integrados en main. CP-004 implementado y probado LOCALMENTE, pendiente de revisión del orquestador. No se aplicó su RPC remota ni se publicó administración. Storefront productivo reportado por usuario; no se modifica Netlify. Detalle: [CP004_HANDOFF.md](CP004_HANDOFF.md). Estados anteriores conservados como historial.
+**Estado general:** CP-002/CP-003A/CP-003B APPROVED e integrados en main. CP-004 en segunda revisión tras correcciones locales de Auth. Migración RPC remota y publicación pendientes. Detalle en [CP004_HANDOFF.md](CP004_HANDOFF.md).
 
-**Pendientes CP-004:** autorización para migración RPC remota, identidad/admin controlados y publicación posterior. No bloquean las pruebas locales completadas. Auditoría completa detecta 10 moderadas del toolchain de lint preexistente; dependencias productivas: 0. Credenciales/respaldos fuera de Git.
+**Pendientes CP-004:** segunda revisión técnica, completar integración GoTrue/DB cuando esté disponible el stack desechable y autorización independiente para operaciones remotas. La auditoría histórica incluyó diez hallazgos moderados de tooling y cero en dependencias de producción.
 
 | CP | Estado | Ejecutor | Resultado |
 |---|---|---|---|
 | CP-001 | Archivado | equipo | `index_elec.html` guardado sin uso en producción |
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
 | CP-003 | CP-003A/CP-003B **APPROVED** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP local; migración/seed remotos y frontend local aprobados; cierre documental |
-| CP-004 | LOCAL / REVIEW | Codex | Auth/CRUD local y 69 aserciones DB locales; remoto/administrador real/publicación pendientes |
+| CP-004 | LOCAL / RE-REVIEW | Codex | Correcciones de Auth con regresiones frontend y de navegador. Integración actual pendiente. 69 aserciones DB en la entrega original |
 | CP-005 | WAITING | Codex | Espera aprobación |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
 | CP-007 | OPTIONAL | Codex | Reparaciones fuera del MVP |
@@ -163,7 +163,7 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Netlify: no netlify.toml, estado .netlify, CLI ni acceso autenticado disponible. Ajustes del sitio UNKNOWN, sin cambios. Configuración requerida: base web, build npm run build, publish dist; tres PUBLIC_* del catálogo en Builds/Production. Previews en demo salvo autorización. Reconfigurar variables y desplegar requieren autorización posterior. Fuentes oficiales y detalles en handoff.
 - Controles finales NUEVOS del cierre, ejecutados desde web: npm.cmd run check PASS (27 archivos, 0 errores/warnings/hints), lint PASS, test PASS (31/31 en cinco archivos), build PASS (cinco páginas estáticas); git diff --check PASS. Sin cambios de implementación. Publicación documental autorizada sin force push ni merge. Commit y título PR con [skip netlify] para evitar deploys automáticos según documentación oficial. No se ejecuta SQL remoto ni trabajo CP-004.
 
-### 2026-11-07 — CP-004 / IMPLEMENTACIÓN LOCAL — REVIEW
+### 2026-11-07 — CP-004 / IMPLEMENTACIÓN LOCAL — REVIEW (histórico, bc52d90)
 
 - Autorización completa de implementación local en adjunto del usuario, sin aprobaciones intermedias rutinarias. Rama cp-004-admin, HEAD/base 7baab160b3b020d89c1d6dcb36126ae63b4c5390. Fetch origin main y rev-list confirman base actualizada (0/0). CP-003B integrado; publicación storefront reportada por humano, sin operaciones Netlify en esta tarea.
 - Implementado /admin (Astro estático + React client-only), SDK oficial @supabase/supabase-js 2.119.0 para Auth/CRUD, sesión por pestaña, login/logout/renovación, usuario no admin cerrado, listado paginado de activos/ocultos, alta/edición/SKU/precio centavos/categoría/stock/visibilidad, borrado confirmado y validación/errores/éxito/vacío accesibles. El adaptador anónimo catálogo/ficha no cambia. Navegación y wrap móvil ajustados por la nueva entrada.
@@ -177,3 +177,12 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - Límites/pasos posteriores: RPC remota, identidad Auth verificada y membresía manual de primer admin, pruebas productivas controladas y publicación requieren autorización separada. Pasos y plantillas no ejecutadas en handoff. Sin push, PR, merge, deploy, SQL remoto, CP-005 ni cambios de Netlify/variables productivas. Commit exclusivamente local si controles finales pasan; esperar revisión.
 - Controles FINALES de entrega tras correcciones: npm.cmd run check PASS (36 archivos, 0 errores/warnings/hints); lint PASS; test PASS (63/63 en ocho archivos, incluidos los 31 previos); seed:check PASS; build PASS (seis páginas, incluida /admin). SQL local 53+16/69 PASS y smoke admin local ampliado PASS; smoke público existente PASS en build DEMO aislado. Auditoría productiva 0; completa 10 moderadas de tooling preexistente, no PASS limpio.
 - Cierre operativo: smoke detuvo navegador/Astro propios y limpió sus identidades/productos locales; supabase stop PASS (exit 0), sin borrar volúmenes. No queda servicio de prueba iniciado por esta tarea. SQL/migraciones/seed/Auth remotos y Netlify no se tocaron. Commit local al concluir, SHA en reporte final; no push.
+
+### 2026-11-21 — CP-004 / CORRECCIONES DE AUTH — SEGUNDA REVISIÓN
+
+- Base de revisión `bc52d90f1d46c59fd5d21120eb408dd81e88057d` en `cp-004-admin`. El SDK mantiene Auth en memoria sin BroadcastChannel. `admin-session.ts` usa Web Locks para detectar copias mientras vive el documento dueño, y `admin-source.ts` restaura la sesión mediante la API pública `setSession`. Si el dueño desaparece, una copia restaurada puede parecer una recarga. La alternativa de aislamiento estricto requiere Auth solo en memoria y nuevo login al recargar.
+- `AdminApp.tsx` compara la identidad antes de invalidar el estado. Renovación y eventos repetidos conservan el borrador. Salida, ausencia de sesión, cambio de identidad o revocación limpian la gestión. El epoch descarta respuestas tardías. RPC, RLS y CRUD conservan su diseño.
+- Nuevas regresiones en `admin-ui.test.tsx` y `scripts/admin-session-browser.mjs`, con comando en `web/package.json`. `scripts/admin-local-smoke.mjs` amplía la cobertura de GoTrue real con copia de pestaña, recarga y solicitudes REST PATCH/DELETE de usuario normal. README, PROJECT y handoff describen el alcance y los límites vigentes.
+- Verificación desde una copia temporal aislada con Node 24.6.0 y npm 11.5.1. `npm.cmd run check` PASS (38 archivos, cero diagnósticos), `lint` PASS, `test` PASS (66/66 en ocho archivos), `seed:check` PASS (16 productos) y `build` PASS (seis rutas estáticas). `npm.cmd run smoke` PASS (cuatro rutas públicas a 360/1440 px, axe, teclado y navegación).
+- `npm.cmd run test:admin:browser` PASS en Edge con el SDK real y API sintética interceptada. Probó pestañas independientes, copia real de storage por opener, ausencia del canal Auth, login/logout independientes, renovación con borrador, recuperación al recargar, revocación y sesión expirada.
+- `npm.cmd run test:db` y `npm.cmd run test:admin:local` quedaron **BLOCKED_EXTERNAL** en preflight. El motor Docker Linux local no estaba disponible y Supabase local no estaba iniciado y migrado. El smoke REST y las 69 aserciones SQL de la entrega original siguen como evidencia histórica. No hubo operaciones en Supabase remoto, GitHub o Netlify.

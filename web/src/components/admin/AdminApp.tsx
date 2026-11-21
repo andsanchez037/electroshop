@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type SubmitEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { AdminAccessError, AdminOperationError, createAdminGateway, type AdminGateway, type AdminSession } from '../../data/admin-source';
 import { type AdminCategory, type AdminProduct, type ProductDraft } from '../../data/admin-product';
 import { formatPrice, normalize } from '../../data/catalog';
@@ -9,7 +9,7 @@ const message = (error: unknown) => error instanceof AdminOperationError || erro
 
 export default function AdminApp({ gateway: supplied }: { gateway?: AdminGateway }) {
   const [gateway, setGateway] = useState<AdminGateway | null>(supplied ?? null);
-  const [session, setSession] = useState<AdminSession | null | undefined>(undefined);
+  const [session, setSession] = useState<AdminSession | null>();
   const [access, setAccess] = useState<Access>('checking');
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
@@ -19,12 +19,29 @@ export default function AdminApp({ gateway: supplied }: { gateway?: AdminGateway
   const [deleting, setDeleting] = useState<AdminProduct | null>(null);
   const [query, setQuery] = useState(''); const [visibility, setVisibility] = useState('');
   const epoch = useRef(0); const action = useRef(false);
+  const identity = useRef<string | null | undefined>(undefined);
+  const signingOut = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null); const deleteCancel = useRef<HTMLButtonElement>(null);
-  const clearPrivate = () => { setProducts([]); setCategories([]); setEditor(null); setDeleting(null); };
+  const clearPrivate = useCallback(() => { setProducts([]); setCategories([]); setEditor(null); setDeleting(null); }, []);
+  const transition = useCallback((next: string | null) => {
+    if (identity.current === next) return;
+    identity.current = next;
+    ++epoch.current;
+    clearPrivate();
+    setSession(next ? { userId: next } : null);
+    setAccess(next ? 'checking' : 'login');
+    setNotice('');
+    setError('');
+  }, [clearPrivate]);
 
   useEffect(() => {
     if (gateway) return;
-    try { setGateway(createAdminGateway()); } catch { setError('Administración no configurada. Requiere Supabase y la migración CP-004 revisada.'); setAccess('error'); }
+    let active = true;
+    createAdminGateway().then(next => { if (active) setGateway(next); })
+      .catch(() => {
+        if (active) { setError('Administración no configurada. Requiere Supabase y la migración CP-004 revisada.'); setAccess('error'); }
+      });
+    return () => { active = false; };
   }, [gateway, revision]);
 
   useEffect(() => {
@@ -32,28 +49,28 @@ export default function AdminApp({ gateway: supplied }: { gateway?: AdminGateway
     let active = true; let receivedEvent = false;
     const unsubscribe = gateway.subscribe(next => {
       receivedEvent = true;
-      if (active) { ++epoch.current; setSession(next); clearPrivate(); setAccess(next ? 'checking' : 'login'); setError(''); }
+      if (active && !signingOut.current) transition(next?.userId ?? null);
     });
-    gateway.session().then(next => { if (active && !receivedEvent) setSession(next); })
-      .catch(() => { if (active && !receivedEvent) { setError('La sesión no pudo recuperarse. Vuelve a iniciar sesión.'); setSession(null); } });
+    gateway.session().then(next => { if (active && !receivedEvent) transition(next?.userId ?? null); })
+      .catch(() => { if (active && !receivedEvent) { transition(null); setError('La sesión no pudo recuperarse. Vuelve a iniciar sesión.'); } });
     return () => { active = false; ++epoch.current; unsubscribe(); };
-  }, [gateway]);
+  }, [gateway, transition]);
 
   useEffect(() => {
-    if (!gateway || session === undefined) return;
+    if (!gateway || !session) return;
     const current = ++epoch.current;
-    clearPrivate(); setAccess(session ? 'checking' : 'login');
-    if (!session) return;
+    clearPrivate(); setAccess('checking');
     (async () => {
       try {
         if (!await gateway.isAdmin()) { if (epoch.current === current) setAccess('denied'); return; }
+        if (epoch.current !== current) return;
         const [items, groups] = await Promise.all([gateway.listProducts(), gateway.listCategories()]);
         if (epoch.current !== current) return;
         setProducts(items); setCategories(groups); setAccess('admin'); setError('');
       } catch (e) { if (epoch.current === current) { clearPrivate(); setAccess(e instanceof AdminAccessError ? 'denied' : 'error'); setError(message(e)); } }
     })();
     return () => { if (epoch.current === current) ++epoch.current; };
-  }, [gateway, session, revision]);
+  }, [gateway, session, revision, clearPrivate]);
 
   // Revocación/expiración: reevaluación en BD, sin leer metadata ni cachear roles.
   useEffect(() => {
@@ -67,7 +84,7 @@ export default function AdminApp({ gateway: supplied }: { gateway?: AdminGateway
     const timer = window.setInterval(() => void recheck(), 30000);
     window.addEventListener('focus', visible);
     return () => { window.clearInterval(timer); window.removeEventListener('focus', visible); };
-  }, [gateway, access]);
+  }, [gateway, access, clearPrivate]);
 
   useEffect(() => { if (editor) heading.current?.focus(); if (deleting) deleteCancel.current?.focus(); }, [editor, deleting]);
 
@@ -76,15 +93,15 @@ export default function AdminApp({ gateway: supplied }: { gateway?: AdminGateway
     const form = event.currentTarget; const data = new FormData(form);
     const email = String(data.get('email') ?? '').trim(); const password = String(data.get('password') ?? '');
     action.current = true; setBusy(true); setError('');
-    try { await gateway.signIn(email, password); setSession(await gateway.session()); setNotice(''); }
+    try { await gateway.signIn(email, password); }
     catch (e) { setError(message(e)); }
     finally { const input = form.elements.namedItem('password'); if (input instanceof HTMLInputElement) input.value = ''; action.current = false; setBusy(false); }
   }
   async function logout() {
     if (!gateway || action.current) return;
-    action.current = true; setBusy(true); ++epoch.current; clearPrivate(); setSession(null); setAccess('login'); setNotice(''); setError('');
+    action.current = true; signingOut.current = true; setBusy(true); transition(null);
     try { await gateway.signOut(); } catch (e) { setError(message(e)); }
-    finally { action.current = false; setBusy(false); }
+    finally { signingOut.current = false; action.current = false; setBusy(false); }
   }
   async function mutate(work: () => Promise<void>, success: string) {
     if (!gateway || access !== 'admin' || action.current) return;
@@ -106,7 +123,7 @@ export default function AdminApp({ gateway: supplied }: { gateway?: AdminGateway
     {error && <p role="alert" className="admin-error">{error}</p>}
     {session && <div className="admin-actions"><span>{access === 'admin' ? 'Administrador verificado en PostgreSQL' : 'Sesión autenticada · acceso pendiente o no autorizado'}</span><button className="button secondary" disabled={busy} onClick={logout}>Cerrar sesión</button></div>}
     {access === 'checking' && <p role="status">Verificando acceso…</p>}
-    {access === 'login' && <section className="admin-panel admin-login" aria-labelledby="login-title"><h2 id="login-title">Iniciar sesión</h2><p>Acceso exclusivo a administradores autorizados. La sesión se guarda solo en esta pestaña.</p>
+    {access === 'login' && <section className="admin-panel admin-login" aria-labelledby="login-title"><h2 id="login-title">Iniciar sesión</h2><p>Acceso exclusivo a administradores autorizados.</p>
       <form onSubmit={login}><fieldset disabled={busy} className="admin-fields"><legend className="sr-only">Credenciales</legend>
         <div className="admin-full"><label htmlFor="admin-email">Correo electrónico</label><input id="admin-email" name="email" type="email" autoComplete="username" required maxLength={254} /></div>
         <div className="admin-full"><label htmlFor="admin-password">Contraseña</label><input id="admin-password" name="password" type="password" autoComplete="current-password" required /></div>

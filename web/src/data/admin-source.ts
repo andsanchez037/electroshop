@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { assertPublicEnvironment } from '../../scripts/public-env.mjs';
 import { categories } from './catalog';
 import { fieldsFor, parseAdminProduct, validateProduct, type AdminCategory, type AdminProduct, type ProductDraft } from './admin-product';
+import { openAdminSessionStore } from './admin-session';
 
 export interface AdminSession { userId: string }
 export interface AdminGateway {
@@ -39,7 +40,7 @@ export function gatewayFor(client: SupabaseClient): AdminGateway {
     async session() { const { data, error } = await client.auth.getSession(); if (error) throw new AdminAccessError(); return data.session ? { userId: data.session.user.id } : null; },
     subscribe(callback) {
       // Callback síncrono: no consultas SDK dentro del lock de onAuthStateChange.
-      const { data } = client.auth.onAuthStateChange((_event, session) => callback(session ? { userId: session.user.id } : null));
+      const { data } = client.auth.onAuthStateChange((event, session) => callback(event !== 'SIGNED_OUT' && session ? { userId: session.user.id } : null));
       return () => data.subscription.unsubscribe();
     },
     async signIn(email, password) {
@@ -89,17 +90,50 @@ export function gatewayFor(client: SupabaseClient): AdminGateway {
   };
 }
 
-let browserGateway: AdminGateway | undefined;
-export function createAdminGateway(): AdminGateway {
-  if (browserGateway) return browserGateway;
+let browserGateway: Promise<AdminGateway> | undefined;
+export function createAdminGateway(): Promise<AdminGateway> {
+  return browserGateway ??= initializeAdminGateway().catch(error => {
+    browserGateway = undefined;
+    throw error;
+  });
+}
+
+async function initializeAdminGateway(): Promise<AdminGateway> {
   const env = { PUBLIC_CATALOG_MODE: import.meta.env.PUBLIC_CATALOG_MODE, PUBLIC_SUPABASE_URL: import.meta.env.PUBLIC_SUPABASE_URL,
     PUBLIC_SUPABASE_PUBLISHABLE_KEY: import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY };
   assertPublicEnvironment({ ...env, PUBLIC_CATALOG_MODE: 'supabase' });
   if (env.PUBLIC_CATALOG_MODE !== 'supabase') throw new AdminOperationError('Administración requiere el modo Supabase configurado.');
-  const client = createClient(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storage: window.sessionStorage, storageKey: 'electroshop-admin-session' },
+  const url = env.PUBLIC_SUPABASE_URL!;
+  const storage = await openAdminSessionStore(new URL(url).origin);
+  const client = createClient(url, env.PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    // The SDK keeps its own session in memory and opens no Auth broadcast channel.
+    auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false },
     global: { fetch: (input, init) => globalThis.fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(15000) }) },
   });
-  browserGateway = gatewayFor(client);
-  return browserGateway;
+  const gateway = gatewayFor(client);
+  if (!storage) return gateway;
+
+  let signingOut = false;
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT') storage.write(null);
+    if (!signingOut && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) storage.write(session);
+  });
+  const tokens = storage.read();
+  if (tokens) {
+    try {
+      const { error } = await client.auth.setSession(tokens);
+      if (error) storage.write(null);
+    } catch {
+      storage.write(null);
+    }
+  }
+  return {
+    ...gateway,
+    async signOut() {
+      signingOut = true;
+      storage.write(null);
+      try { await gateway.signOut(); }
+      finally { signingOut = false; }
+    },
+  };
 }

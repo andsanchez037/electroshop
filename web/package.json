@@ -17,6 +17,7 @@
     "seed:generate": "node scripts/generate-seed.mjs",
     "seed:check": "node scripts/generate-seed.mjs --check",
     "test:db": "node scripts/test-db.mjs",
+    "test:admin:browser": "node scripts/admin-session-browser.mjs",
     "test:admin:local": "node scripts/admin-local-smoke.mjs"
   },
   "dependencies": {

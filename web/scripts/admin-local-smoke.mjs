@@ -1,5 +1,6 @@
 // Auth real y CRUD SOLO Supabase local; jamás leer web/.env.local ni escribir remoto.
 import { spawn, spawnSync } from 'node:child_process';
+import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath, URL } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -14,6 +15,7 @@ const sql = text => { const r = run('docker', ['exec', '-i', 'supabase_db_electr
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 const adminId = '44444444-4444-4444-8444-444444444444'; const userId = '55555555-5555-4555-8555-555555555555';
 const sku = 'CP004-LOCAL-QA'; const password = `${randomUUID()}Aa1!`;
+const storageKey = 'electroshop-admin-session-v2';
 let server, browser, lastPage, fixtures = false, phase = 'preflight';
 const apiStatuses = [];
 let axeViolations = [];
@@ -68,26 +70,50 @@ try {
     await page.addScriptTag({ content: axe.source });
     assert.deepEqual(await page.evaluate(async () => (await globalThis.axe.run()).violations.map(v => v.id)), []);
   }
-  const login = async email => { await page.getByLabel('Correo electrónico').fill(email); await page.getByLabel('Contraseña', { exact: true }).fill(password); await page.getByRole('button', { name: 'Entrar', exact: true }).click(); };
+  const login = async (email, tab = page) => { await tab.getByLabel('Correo electrónico').fill(email); await tab.getByLabel('Contraseña', { exact: true }).fill(password); await tab.getByRole('button', { name: 'Entrar', exact: true }).click(); };
   phase = 'real failed login'; expectedFailure = true;
   await page.getByLabel('Correo electrónico').fill('user@electroshop.invalid'); await page.getByLabel('Contraseña', { exact: true }).fill('incorrect-fixture'); await page.getByRole('button', { name: 'Entrar', exact: true }).click(); await page.getByRole('alert').waitFor(); expectedFailure = false;
   phase = 'real non-admin login'; await login('user@electroshop.invalid'); await page.getByRole('heading', { name: 'Acceso no autorizado', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: 'Nuevo producto', exact: true }).count(), 0);
   expectedFailure = true;
-  const denied = await page.evaluate(async key => {
-    const saved = JSON.parse(globalThis.sessionStorage.getItem('electroshop-admin-session'));
+  const denied = await page.evaluate(async ({ key, storageKey }) => {
+    const saved = JSON.parse(globalThis.sessionStorage.getItem(storageKey));
     const response = await globalThis.fetch('http://127.0.0.1:54321/rest/v1/products', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${saved.access_token}` }, body: JSON.stringify({ sku: 'CP004-FORBIDDEN', name: 'Fixture', description: 'Fixture local', category_id: 'componentes', price_cents: 1 }) });
     return response.status;
-  }, config.PUBLISHABLE_KEY);
+  }, { key: config.PUBLISHABLE_KEY, storageKey });
   assert.equal(denied, 403); expectedFailure = false;
   await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click(); await page.getByRole('heading', { name: 'Iniciar sesión', exact: true }).waitFor();
   phase = 'real admin login'; await login('admin@electroshop.invalid'); await page.getByRole('button', { name: 'Nuevo producto', exact: true }).waitFor();
+  phase = 'real tab isolation and reload';
+  const [copy] = await Promise.all([page.waitForEvent('popup'), page.evaluate(() => { globalThis.open('/admin'); })]);
+  await copy.getByRole('heading', { name: 'Iniciar sesión', exact: true }).waitFor();
+  assert.equal(await copy.evaluate(key => globalThis.sessionStorage.getItem(key), storageKey), null);
+  await login('user@electroshop.invalid', copy);
+  await copy.getByRole('heading', { name: 'Acceso no autorizado', exact: true }).waitFor();
+  await page.reload(); await page.getByRole('button', { name: 'Nuevo producto', exact: true }).waitFor();
   phase = 'admin UI accessibility';
   for (const width of [360, 1440]) { await page.setViewportSize({ width, height: 900 }); assert.ok(await page.evaluate(() => globalThis.document.documentElement.scrollWidth <= globalThis.innerWidth)); await page.addScriptTag({ content: axe.source }); axeViolations = await page.evaluate(async () => (await globalThis.axe.run()).violations.map(v => v.id)); assert.deepEqual(axeViolations, []); }
   phase = 'real create'; await page.getByRole('button', { name: 'Nuevo producto', exact: true }).click();
   await page.getByLabel('SKU', { exact: true }).fill(sku); await page.getByLabel('Nombre', { exact: true }).fill('Producto QA local'); await page.getByLabel('Descripción', { exact: true }).fill('Fixture efímero solo localhost.'); await page.getByLabel('Precio en centavos MXN').fill('12345'); await page.getByLabel('Categoría del producto').selectOption('desarrollo');
   axeViolations = await page.evaluate(async () => (await globalThis.axe.run()).violations.map(v => v.id)); assert.deepEqual(axeViolations, []);
   await page.getByRole('button', { name: 'Guardar producto', exact: true }).click(); await page.getByText('Producto guardado.', { exact: true }).waitFor(); await page.getByRole('heading', { name: 'Producto QA local', exact: true }).waitFor();
+  phase = 'real direct REST update/delete denied';
+  const productId = sql(`select id from public.products where sku='${sku}';`);
+  const unauthorized = await copy.evaluate(async ({ key, storageKey, productId }) => {
+    const saved = JSON.parse(globalThis.sessionStorage.getItem(storageKey));
+    const url = `http://127.0.0.1:54321/rest/v1/products?id=eq.${productId}`;
+    const headers = { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${saved.access_token}`, Prefer: 'return=representation' };
+    return Promise.all(['PATCH', 'DELETE'].map(async method => {
+      const response = await globalThis.fetch(url, { method, headers, body: method === 'PATCH' ? JSON.stringify({ price_cents: 1 }) : undefined });
+      return response.status === 403 || (response.ok && (await response.json()).length === 0);
+    }));
+  }, { key: config.PUBLISHABLE_KEY, storageKey, productId });
+  assert.deepEqual(unauthorized, [true, true]);
+  assert.equal(sql(`select price_cents from public.products where sku='${sku}';`), '12345');
+  await copy.getByRole('button', { name: 'Cerrar sesión', exact: true }).click();
+  await copy.getByRole('heading', { name: 'Iniciar sesión', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Producto QA local', exact: true }).waitFor();
+  await copy.close();
   const publicPage = await context.newPage();
   await publicPage.goto(`http://127.0.0.1:4323/producto?sku=${sku}`); await publicPage.getByRole('heading', { name: 'Producto QA local', exact: true }).waitFor(); assert.equal(await publicPage.locator('.stock').textContent(), 'Sin stock demo');
   phase = 'real edit and visibility'; await page.getByRole('button', { name: `Editar ${sku}`, exact: true }).click(); await page.getByLabel('Precio en centavos MXN').fill('23456'); await page.getByLabel('Stock demo', { exact: true }).fill('3'); await page.getByLabel('Categoría del producto').selectOption('energia'); await page.getByLabel('Visibilidad del producto').selectOption('false'); await page.getByRole('button', { name: 'Guardar producto', exact: true }).click(); await page.getByText('Producto guardado.', { exact: true }).waitFor(); await page.getByRole('button', { name: `Editar ${sku}`, exact: true }).waitFor();
@@ -95,16 +121,20 @@ try {
   await publicPage.reload(); await publicPage.getByRole('heading', { name: 'Producto no encontrado', exact: true }).waitFor();
   phase = 'real delete'; await page.getByRole('button', { name: `Eliminar ${sku}`, exact: true }).click(); assert.equal(sql(`select count(*) from public.products where sku='${sku}';`), '1'); await page.getByRole('button', { name: 'Cancelar eliminación', exact: true }).click();
   await page.getByRole('button', { name: `Eliminar ${sku}`, exact: true }).click(); await page.getByRole('button', { name: 'Eliminar definitivamente', exact: true }).click(); await page.getByText('Producto eliminado.', { exact: true }).waitFor(); assert.equal(sql(`select count(*) from public.products where sku='${sku}';`), '0');
-  phase = 'real revocation'; sql(`delete from public.admin_users where user_id='${adminId}';`); await page.evaluate(() => globalThis.dispatchEvent(new globalThis.Event('focus'))); await page.getByRole('heading', { name: 'Acceso no autorizado', exact: true }).waitFor();
+  phase = 'real revocation'; sql(`delete from public.admin_users where user_id='${adminId}';`); await page.bringToFront(); await page.evaluate(() => globalThis.dispatchEvent(new globalThis.Event('focus'))); await page.getByRole('heading', { name: 'Acceso no autorizado', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click(); await page.getByRole('heading', { name: 'Iniciar sesión', exact: true }).waitFor();
-  assert.equal(await page.evaluate(() => globalThis.sessionStorage.getItem('electroshop-admin-session')), null);
+  await page.waitForFunction(key => globalThis.sessionStorage.getItem(key) === null, storageKey);
   phase = 'expired session with rejected refresh';
   await login('user@electroshop.invalid'); await page.getByRole('heading', { name: 'Acceso no autorizado', exact: true }).waitFor();
-  await page.evaluate(() => { const value = JSON.parse(globalThis.sessionStorage.getItem('electroshop-admin-session')); value.expires_at = Math.floor(Date.now() / 1000) - 3600; value.refresh_token = 'invalid-local-refresh-fixture'; globalThis.sessionStorage.setItem('electroshop-admin-session', JSON.stringify(value)); });
+  const expired = [Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url'),
+    Buffer.from('{"exp":1}').toString('base64url'), Buffer.from('fixture').toString('base64url')].join('.');
+  await page.evaluate(({ key, origin, access_token }) => {
+    globalThis.sessionStorage.setItem(key, JSON.stringify({ origin, access_token, refresh_token: 'invalid-local-refresh-fixture' }));
+  }, { key: storageKey, origin: config.API_URL, access_token: expired });
   expectedFailure = true; await page.reload(); await page.getByRole('heading', { name: 'Iniciar sesión', exact: true }).waitFor(); expectedFailure = false;
   phase = 'public regression'; await publicPage.goto('http://127.0.0.1:4323/catalogo'); await publicPage.getByText('16 de 16 productos', { exact: true }).waitFor(); await publicPage.getByLabel('Nombre o SKU', { exact: true }).fill('ES-D001'); await publicPage.getByText('1 de 16 productos', { exact: true }).waitFor();
   assert.equal(externalRequests, 0); assert.deepEqual(errors, []);
-  globalThis.console.log('PASS: Auth real local (fallo/login/no admin/admin/logout/refresh rechazado), CRUD/confirmación/visibilidad, revocación, catálogo anónimo y axe login/admin/formulario 360/1440. Sin peticiones externas.');
+  globalThis.console.log('PASS: Auth real local (fallo/login/no admin/admin/logout/refresh rechazado), aislamiento de pestañas y recarga, CRUD/confirmación/visibilidad, REST no admin, revocación, catálogo anónimo y axe login/admin/formulario 360/1440. Sin peticiones externas.');
 } catch {
   globalThis.console.error(`FAIL: admin local smoke en fase ${phase}; logs/credenciales omitidos.`);
   globalThis.console.error(JSON.stringify({ apiStatuses, axeViolations, headings: await lastPage?.locator('h2').allTextContents(), alerts: await lastPage?.getByRole('alert').allTextContents() })); process.exitCode = 1;

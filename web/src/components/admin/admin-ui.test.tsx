@@ -50,9 +50,46 @@ describe('Administración: login y protección de UI', () => {
   it('cerrar sesión elimina listado y formulario aunque falle confirmación remota', async () => {
     const user = userEvent.setup(); const { gateway } = setup(true); gateway.signOut.mockRejectedValueOnce(new AdminOperationError('Sesión local cerrada.'));
     render(<AdminApp gateway={gateway} />); await screen.findByRole('heading', { name: sample.name });
+    await user.click(screen.getByRole('button', { name: 'Editar TEST-001' }));
     await user.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
     await screen.findByRole('heading', { name: 'Iniciar sesión' }); expect(screen.queryByText(sample.name)).toBeNull();
+    expect(screen.queryByLabelText('SKU')).toBeNull();
     expect(gateway.signOut).toHaveBeenCalledTimes(1);
+  });
+  it('conserva el borrador al renovar el token y recibir eventos repetidos del mismo usuario', async () => {
+    const user = userEvent.setup(); const { gateway, changeSession } = setup(true);
+    render(<AdminApp gateway={gateway} />); await screen.findByRole('heading', { name: sample.name });
+    await user.click(screen.getByRole('button', { name: 'Editar TEST-001' }));
+    const name = screen.getByLabelText('Nombre', { exact: true }) as HTMLInputElement;
+    await user.type(name, ' sin guardar');
+    await act(async () => {
+      changeSession({ userId: 'local-ui-fixture' });
+      changeSession({ userId: 'local-ui-fixture' });
+    });
+    expect(screen.getByLabelText('Nombre', { exact: true })).toBe(name);
+    expect(name.value).toBe('Producto local sin guardar');
+    expect(gateway.listProducts).toHaveBeenCalledTimes(1);
+  });
+  it('una identidad nueva elimina el editor y vuelve a verificar membresía', async () => {
+    const user = userEvent.setup(); const { gateway, changeSession } = setup(true);
+    render(<AdminApp gateway={gateway} />); await screen.findByRole('heading', { name: sample.name });
+    await user.click(screen.getByRole('button', { name: 'Editar TEST-001' }));
+    gateway.isAdmin.mockResolvedValue(false);
+    await act(async () => { changeSession({ userId: 'other-user' }); });
+    await screen.findByRole('heading', { name: 'Acceso no autorizado' });
+    expect(screen.queryByLabelText('SKU')).toBeNull();
+    expect(screen.queryByText(sample.name)).toBeNull();
+    expect(gateway.listProducts).toHaveBeenCalledTimes(1);
+  });
+  it('un logout e inicio de la misma identidad en un lote vuelven a verificar acceso', async () => {
+    const { gateway, changeSession } = setup(true);
+    render(<AdminApp gateway={gateway} />); await screen.findByRole('heading', { name: sample.name });
+    gateway.isAdmin.mockResolvedValue(false);
+    await act(async () => {
+      changeSession(null);
+      changeSession({ userId: 'local-ui-fixture' });
+    });
+    await screen.findByRole('heading', { name: 'Acceso no autorizado' });
   });
   it('expiración descarta una respuesta privilegiada que llega tarde', async () => {
     const { gateway, changeSession } = setup(true); let resolve!: (p: AdminProduct[]) => void;
@@ -71,10 +108,13 @@ describe('Administración: login y protección de UI', () => {
     expect(screen.queryByText('Verificando acceso…')).toBeNull();
   });
   it('revocación detectada al volver a la ventana cierra inmediatamente la gestión', async () => {
-    const { gateway } = setup(true); render(<AdminApp gateway={gateway} />); await screen.findByRole('heading', { name: sample.name });
+    const user = userEvent.setup(); const { gateway } = setup(true);
+    render(<AdminApp gateway={gateway} />); await screen.findByRole('heading', { name: sample.name });
+    await user.click(screen.getByRole('button', { name: 'Editar TEST-001' }));
     gateway.isAdmin.mockResolvedValue(false);
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await screen.findByRole('heading', { name: 'Acceso no autorizado' }); expect(screen.queryByText(sample.name)).toBeNull();
+    expect(screen.queryByLabelText('SKU')).toBeNull();
   });
   it('fallo de red al verificar acceso permanece cerrado y ofrece reintento', async () => {
     const user = userEvent.setup(); const { gateway } = setup(true); gateway.isAdmin.mockRejectedValueOnce(new Error('PRIVATE raw backend message'));

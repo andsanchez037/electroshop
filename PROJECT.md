@@ -1,6 +1,6 @@
 # Electro Shop — PROJECT.md (fuente de verdad para Codex)
 
-**Actualización:** 7 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-004 implementado y probado LOCALMENTE, pendiente de revisión; nueva RPC no aplicada remotamente. Sin publicación de CP-004.
+**Actualización:** 21 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-004 en segunda revisión tras las correcciones locales de sesión. RPC remota y publicación pendientes.
 
 **Propósito:** prototipo universitario **no comercial** de un catálogo de electrónica con administración segura.
 
@@ -112,7 +112,7 @@ Los requisitos siguientes se conservan como referencia del alcance aprobado:
 
 ### CP-004 — Login real y CRUD admin **(LOCAL IMPLEMENTADO / EN REVISIÓN)**
 
-Autorización local comunicada por el usuario en el prompt CP-004: rama cp-004-admin desde main 7baab160b3b020d89c1d6dcb36126ae63b4c5390. Login/logout SDK oficial, sesión por pestaña, UI de listado/alta/edición/visibilidad/borrado confirmado; permisos comprobados en PostgreSQL, sin registro ni autoasignación. RPC booleana SECURITY INVOKER nueva solo aplicada a Supabase local; no cambia tablas/RLS CP-003A. 53+16 pgTAP locales y smoke Auth/CRUD real local; no administradores reales ni verificación productiva de admin. Reporte completo y pasos pendientes: `docs/CP004_HANDOFF.md`. Commit solo local, no push/PR/merge/deploy.
+Autorización local comunicada por el usuario en el prompt CP-004: rama cp-004-admin desde main 7baab160b3b020d89c1d6dcb36126ae63b4c5390. Login/logout con el SDK oficial, Auth en memoria sin difusión entre pestañas y recuperación al recargar con `sessionStorage` y Web Locks. Una copia de sesión sin el documento original activo puede ser indistinguible de una recarga. Los eventos de la misma identidad conservan los borradores. La UI de listado/alta/edición/visibilidad/borrado confirmado depende de permisos de PostgreSQL, sin registro ni autoasignación. RPC booleana SECURITY INVOKER aplicada durante la validación histórica local; tablas y RLS CP-003A conservadas. El registro histórico incluye 53+16 pgTAP locales y smoke Auth/CRUD real local. La evidencia actual y los pasos pendientes están en `docs/CP004_HANDOFF.md`. Commit exclusivamente local.
 **Implementar Codex:** Supabase Auth con login/logout, sesión y estados; panel admin para crear/editar/desactivar productos; validación frontend y constraints backend; carga, paginación básica si aplica y mensajes de éxito/error accesibles. No permitir registro libre como administrador ni mostrar datos privados. El archivo `index_elec.html` no participa de la implementación.
 
 **Aceptar si:** invitado/cliente normal no puede realizar CREATE/UPDATE/DELETE ni llamando directamente a API; admin autorizado sí. Demostrar con pruebas automáticas RLS + manuales o reportar bloqueos. Nunca confiar en una ruta oculta como seguridad.
