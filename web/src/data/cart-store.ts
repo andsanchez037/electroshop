@@ -53,7 +53,8 @@ export function createCartStore(storage: () => Storage, lock: <T>(work: () => T)
     add: (product: Product, quantity: number) => update(lines => changeCart(lines, product, quantity, true)),
     set: (product: Product, quantity: number, previous: number) => update(lines =>
       lines.find(line => line.sku === product.sku)?.quantity === previous ? changeCart(lines, product, quantity) : conflict),
-    remove: (sku: string) => update(lines => ({ lines: lines.filter(line => line.sku !== sku) })),
+    remove: (sku: string, previous: number) => update(lines =>
+      lines.find(line => line.sku === sku)?.quantity === previous ? { lines: lines.filter(line => line.sku !== sku) } : conflict),
     clear: (expected: string, active = () => true) => update(lines =>
       active() && cartSignature(lines) === expected ? { lines: [] } : conflict),
   };

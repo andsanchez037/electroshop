@@ -70,7 +70,9 @@ export default function CartPage() {
               } }}
               onRemove={sku => {
                 const index = lines.findIndex(line => line.sku === sku);
-                void change(() => cart.remove(sku), 'Producto eliminado.', true, lines[index + 1]?.sku ?? lines[index - 1]?.sku);
+                const line = lines[index];
+                if (!line) return;
+                void change(() => cart.remove(sku, line.quantity), 'Producto eliminado.', true, lines[index + 1]?.sku ?? lines[index - 1]?.sku);
               }} />
             </section>
             <OrderSummary lines={reviewed}>

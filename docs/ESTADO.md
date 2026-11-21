@@ -2,16 +2,16 @@
 
 **Última actualización:** 2026-11-21
 
-**Estado general:** CP-002/CP-003A/CP-003B APPROVED e integrados en main. CP-004 en segunda revisión tras correcciones locales de Auth. Migración RPC remota y publicación pendientes. Detalle en [CP004_HANDOFF.md](CP004_HANDOFF.md).
+**Estado general:** CP-002/CP-003A/CP-003B APPROVED e integrados en main. CP-004 APPROVED técnicamente en LOCAL el 21 de noviembre de 2026. Integración a main, migración RPC remota y publicación pendientes. Detalle en [CP004_HANDOFF.md](CP004_HANDOFF.md).
 
-**Pendientes CP-004:** segunda revisión técnica, completar integración GoTrue/DB cuando esté disponible el stack desechable y autorización independiente para operaciones remotas. La auditoría histórica incluyó diez hallazgos moderados de tooling y cero en dependencias de producción.
+**Pendientes CP-004:** autorización independiente para integración a main, operaciones remotas y publicación. La auditoría histórica incluyó diez hallazgos moderados de tooling y cero en dependencias de producción.
 
 | CP | Estado | Ejecutor | Resultado |
 |---|---|---|---|
 | CP-001 | Archivado | equipo | `index_elec.html` guardado sin uso en producción |
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
 | CP-003 | CP-003A/CP-003B **APPROVED** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP local; migración/seed remotos y frontend local aprobados; cierre documental |
-| CP-004 | LOCAL / RE-REVIEW | Codex | Correcciones de Auth con regresiones frontend y de navegador. Integración actual pendiente. 69 aserciones DB en la entrega original |
+| CP-004 | **APPROVED técnicamente en LOCAL · 2026-11-21** | Orquestador externo | 69/69 pgTAP, smoke GoTrue/REST real y limpieza verificada sobre `7488efe` |
 | CP-005 | LOCAL PASS / REVIEW | Codex | Carrito y pedido DEMO, smoke Edge y Supabase local |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
 | CP-007 | OPTIONAL | Codex | Reparaciones fuera del MVP |
@@ -194,3 +194,8 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 - `npm.cmd run smoke` y `npm.cmd run smoke -- --supabase-local` **PASS**. Edge 360/1440 px, recorrido completo DEMO y con PostgREST local real, recarga, sincronización entre dos pestañas, stock insuficiente, entrega y recolección, axe y comprobación de red.
 - `npm.cmd run test:db` **PASS** (69/69, 53 + 16). `npm.cmd run test:admin:local` **PASS** con GoTrue/REST/RLS reales. `npm.cmd run test:admin:browser` **PASS** con SDK real y transporte sintético. El stack local conservó ambas migraciones y terminó con 4 categorías, 16 productos y cero usuarios, membresías, identidades y sesiones.
 - CP-005 queda pendiente de revisión independiente. El patch es local y se excluye del índice. Se preserva la evidencia previa no staged de CP-004. Sin operaciones remotas ni trabajo de CP-006.
+
+### CP-005 / CORRECCIÓN DE REVISIÓN INDEPENDIENTE
+
+- `cart-store.ts` compara la cantidad de la línea que `CartPage.tsx` mostró antes de quitarla. La regresión en `cart.test.ts` usa dos stores con el mismo storage y comprueba que una eliminación obsoleta conserva la selección más reciente. El estado vigente de CP-004 en esta bitácora y PROJECT registra la aprobación técnica en LOCAL del 21 de noviembre de 2026.
+- En copia aislada, `npm.cmd run check` **PASS** (49 archivos, cero diagnósticos), `npm.cmd run lint` **PASS**, `npm.cmd run test` **PASS** (80/80 en diez archivos), `npm.cmd run seed:check` **PASS**, `npm.cmd run build` **PASS** (ocho rutas) y `npm.cmd run smoke` **PASS** en Edge DEMO a 360/1440 px. La evidencia previa de Supabase, SQL y Auth corresponde a la validación anterior.

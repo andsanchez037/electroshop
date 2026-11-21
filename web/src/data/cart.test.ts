@@ -23,7 +23,7 @@ describe('Persistencia de carrito', () => {
     expect(store.getSnapshot().lines).toEqual([line, { sku: second.sku, quantity: 1 }]);
     expect(await store.set(first, 1, 2)).toBeUndefined();
     expect((await store.set(first, 2, 2))?.includes('cambió')).toBe(true);
-    await store.remove(second.sku);
+    expect(await store.remove(second.sku, 1)).toBeUndefined();
     expect(storage.getItem(CART_KEY)).toBe(encodeCart([{ sku: first.sku, quantity: 1 }]));
     await store.clear(cartSignature(store.getSnapshot().lines));
     expect(storage.getItem(CART_KEY)).toBeNull();
@@ -52,6 +52,23 @@ describe('Persistencia de carrito', () => {
     expect(listener).toHaveBeenCalledOnce();
     expect(await store.clear(original)).toBeTruthy();
     expect(store.getSnapshot().lines).toHaveLength(2);
+  });
+  it('rechaza quitar una línea que cambió en otra pestaña y conserva la selección actual', async () => {
+    const { store, storage } = storageFixture();
+    await store.add(first, 1);
+    await store.add(second, 1);
+    const original = store.getSnapshot().lines[0]!;
+    const other = createCartStore(() => storage);
+    expect(await other.add(first, 1)).toBeUndefined();
+    const latest = other.getSnapshot().lines;
+    const saved = storage.getItem(CART_KEY);
+    expect(original.quantity).toBe(1);
+    expect(latest).toEqual([line, { sku: second.sku, quantity: 1 }]);
+    expect(await store.remove(original.sku, original.quantity)).toMatch(/cambió en otra pestaña/);
+    expect(storage.getItem(CART_KEY)).toBe(saved);
+    expect(store.getSnapshot().lines).toEqual(latest);
+    expect(await store.remove(original.sku, line.quantity)).toBeUndefined();
+    expect(storage.getItem(CART_KEY)).toBe(encodeCart([{ sku: second.sku, quantity: 1 }]));
   });
   it('conserva el carrito de la página si el navegador rechaza la escritura', async () => {
     const { storage } = storageFixture();

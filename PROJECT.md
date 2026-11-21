@@ -1,6 +1,6 @@
 # Electro Shop — PROJECT.md (fuente de verdad para Codex)
 
-**Actualización:** 21 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-005 implementado y validado localmente, pendiente de revisión independiente. La RPC remota de CP-004 y la publicación están pendientes.
+**Actualización:** 21 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-004 APPROVED técnicamente en LOCAL el 21 de noviembre de 2026. CP-005 implementado y validado localmente, pendiente de revisión independiente. La integración a main, la RPC remota y la publicación de CP-004 están pendientes.
 
 **Propósito:** prototipo universitario **no comercial** de un catálogo de electrónica con administración segura.
 
@@ -14,7 +14,7 @@
 4. La estructura de referencia funcional es https://www.dipmecatronica.com (búsqueda, categorías, productos, carrito), **no** una licencia para copiar su HTML, textos, logo, imágenes o bases de datos. Rediseñar con identidad Electro Shop.
 5. Paleta orientativa recuperada del prototipo: `#121214` carbón, `#a855f7` violeta, blanco y grises. Rescatar únicamente la paleta y el concepto visual; **no** llevar el `index_elec.html` al código productivo.
 6. **Stack operativo para el MVP:** Astro (sitio estático) + islas React + TypeScript estricto + Tailwind compilado + Vitest y/o herramientas de test adecuadas; Git/GitHub; Netlify Free; Supabase PostgreSQL + Auth y RLS. Firebase Firestore **solo alternativa si el equipo cambia esta decisión**. No implementar ambos.
-7. **Situación vigente:** CP-002/CP-003A/CP-003B aprobados e integrados. CP-004 local está en revisión: login/CRUD bajo RLS y RPC de consulta de membresía preparada. Publicación storefront reportada operativa por el usuario; no verificada/desplegada en esta tarea. Nuevas escrituras remotas, admins o despliegue CP-004 requieren aprobación separada. Ver `docs/CP004_HANDOFF.md`.
+7. **Situación vigente:** CP-002/CP-003A/CP-003B aprobados e integrados. CP-004 APPROVED técnicamente en LOCAL el 21 de noviembre de 2026. Publicación storefront reportada operativa por el usuario. La integración a main, las escrituras remotas, las cuentas admin y el despliegue de CP-004 requieren aprobación separada. Ver `docs/CP004_HANDOFF.md`.
 8. Evitar sobreingeniería: no FastAPI, pagos, integraciones ERP, e-mail transaccional, inventario real, envío real, scraping, funciones serverless ni Microservicios en la primera entrega.
 9. Toda acción simulada se rotula `DEMO / NO ES UNA COMPRA REAL`; jamás usar datos reales de clientes, pedidos o teléfonos sin revisión.
 10. **Pausar entre checkpoints:** al terminar cada CP, actualizar `docs/ESTADO.md`, publicar resultados verificables y esperar revisión. No iniciar la siguiente fase automáticamente.
@@ -110,7 +110,7 @@ Los requisitos siguientes se conservan como referencia del alcance aprobado:
 
 **Aceptar si:** catálogo lee registros persistentes de Supabase; anon no escribe productos, user normal no escribe, admin autenticado sí; no se publican secretos; migraciones/seeds versionadas e idempotencia cuando sea factible; `npm run build` y tests verdes. Bloquear aprobación si faltan pruebas de autorización.
 
-### CP-004 — Login real y CRUD admin **(LOCAL IMPLEMENTADO / EN REVISIÓN)**
+### CP-004 — Login real y CRUD admin **(APPROVED TÉCNICAMENTE EN LOCAL · 21 DE NOVIEMBRE DE 2026)**
 
 Autorización local comunicada por el usuario en el prompt CP-004: rama cp-004-admin desde main 7baab160b3b020d89c1d6dcb36126ae63b4c5390. Login/logout con el SDK oficial, Auth en memoria sin difusión entre pestañas y recuperación al recargar con `sessionStorage` y Web Locks. Una copia de sesión sin el documento original activo puede ser indistinguible de una recarga. Los eventos de la misma identidad conservan los borradores. La UI de listado/alta/edición/visibilidad/borrado confirmado depende de permisos de PostgreSQL, sin registro ni autoasignación. RPC booleana SECURITY INVOKER aplicada durante la validación histórica local; tablas y RLS CP-003A conservadas. El registro histórico incluye 53+16 pgTAP locales y smoke Auth/CRUD real local. La evidencia actual y los pasos pendientes están en `docs/CP004_HANDOFF.md`. Commit exclusivamente local.
 **Implementar Codex:** Supabase Auth con login/logout, sesión y estados; panel admin para crear/editar/desactivar productos; validación frontend y constraints backend; carga, paginación básica si aplica y mensajes de éxito/error accesibles. No permitir registro libre como administrador ni mostrar datos privados. El archivo `index_elec.html` no participa de la implementación.
@@ -166,7 +166,7 @@ Protocolo de revisión: el usuario comparte enlace a PR, diff, árbol de archivo
 | CP-001 | Vibecode HTML original | **Archivado** | Ninguna |
 | CP-002 | Astro + home + catálogo demo | **APPROVED / cerrado por aprobación comunicada por el usuario** | Ninguna pendiente para el cierre |
 | CP-003 | Supabase SQL, RLS y catálogo persistente | **CP-003A/CP-003B APPROVED; catálogo remoto y frontend local verificados** | Netlify y CP-004 requieren autorización posterior |
-| CP-004 | Login real + CRUD admin | **Implementación LOCAL en revisión** | Aprobar RPC remota, identidad/admin controlados y publicación por separado |
+| CP-004 | Login real + CRUD admin | **APPROVED técnicamente en LOCAL · 2026-11-21** | Integración a main, RPC remota, identidad/admin controlados y publicación pendientes |
 | CP-005 | Carrito/pedido simulado | **Implementación local en revisión** | Aprobación externa del checkpoint |
 | CP-006 | Netlify y demo pública | **Pendiente** | GitHub + Netlify |
 | CP-007 | Reparaciones | **Opcional / pospuesto** | Por definir |
