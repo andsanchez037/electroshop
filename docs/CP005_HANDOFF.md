@@ -1,6 +1,8 @@
 # CP-005 — carrito y pedido DEMO
 
-Rama `cp-005-cart-checkout`, con base verificada `7488efe00959e233d25234c409eafe112ef7073d` de CP-004. La revisión local quedó en el commit que incorpora este documento. Para obtener su SHA exacto, ejecutar `git log -1 --format=%H -- docs/CP005_HANDOFF.md`. El mismo rango se entrega en `CP005_REVIEW.patch`.
+CP-005 recibió aprobación técnica independiente en LOCAL el 21 de noviembre de 2026. La implementación aprobada es `d0aeb99efd964775fe59164f7416d378ba24b01a` en `cp-005-cart-checkout`. El patch revisado conserva el rango desde `7488efe00959e233d25234c409eafe112ef7073d` hasta ese commit. Integración a main y publicación pendientes.
+
+El commit inicial `ef8b3d4d207706bbbedb246cef823d88f5581a54` implementó el carrito y el pedido DEMO. La corrección posterior valida la cantidad mostrada antes de eliminar una línea. Su regresión con dos stores confirma que una eliminación obsoleta conserva la selección más reciente. También se corrigió el estado de aprobación local de CP-004 en PROJECT y ESTADO.
 
 ## Implementación
 
@@ -14,7 +16,7 @@ Rama `cp-005-cart-checkout`, con base verificada `7488efe00959e233d25234c409eafe
 ## Privacidad y límites de la demostración
 
 - Los formularios solicitan únicamente datos ficticios. La aplicación conserva contacto y domicilio en estado React, los descarta al salir o confirmar y nunca los usa en solicitudes de red, URLs o storage. El comprobante temporal excluye contacto y domicilio.
-- El pedido y la entrega se simulan en pantalla. La referencia solo identifica el comprobante temporal de la demo. El único acceso a Supabase desde el flujo es la lectura anónima del catálogo. El panel Auth y su RLS, migraciones y RPC se mantienen en su alcance previo.
+- El pedido y la entrega se simulan en pantalla. La referencia solo identifica el comprobante temporal de la demo. El flujo no crea pedidos reales, pagos ni registros de entrega. El único acceso a Supabase desde el flujo es la lectura anónima del catálogo. El panel Auth y su RLS, migraciones y RPC se mantienen en su alcance previo.
 - La selección es por navegador y origen. Si el navegador bloquea storage, el carrito funciona en la página actual y puede perderse al navegar o recargar. Sin Web Locks se relee storage en cada mutación, pero dos escrituras realmente simultáneas pueden quedar en el orden en que las aplica el navegador. No se sincroniza entre dispositivos.
 - El precio anterior a la carga no se guarda. La comparación de precios y stock histórico comienza con el resumen revisado. El catálogo puede cambiar después de la última lectura, ya que el flujo DEMO no reserva inventario.
 - La comprobación visual y accesible usa Edge automatizado, 360 y 1440 px. Quedan revisión externa en dispositivo físico y lector de pantalla, y autorización separada para publicación.
@@ -52,7 +54,7 @@ npm.cmd run test:admin:browser
 
 La publicación requiere aprobación separada, HTTPS y build estático de `web` a `dist` con Node compatible con el proyecto. Si se elige Supabase, usar la configuración pública existente con RLS vigente. Antes de una publicación que incluya administración, completar los prerrequisitos externos de CP-004. No se añaden variables de CP-005, tablas de pedidos, funciones ni ajustes de Netlify.
 
-## Resultados locales
+## Resultados locales de la implementación original
 
 | Comando | Resultado |
 | --- | --- |
@@ -70,3 +72,7 @@ La publicación requiere aprobación separada, HTTPS y build estático de `web` 
 El recorrido Edge cubrió agregar desde catálogo y ficha, doble clic, recarga, cambio en otra pestaña, ajuste de stock, incrementos, decrementos, cancelar el vaciado, entrega a 360 px y recogida a 1440 px. También comprobó validación, total, comprobante único y vaciado. Axe se ejecutó en el carrito, el formulario y el comprobante. Se verificaron consola, ausencia de datos de entrega en storage y red limitada a lectura de recursos y del catálogo. Vitest simuló cambios de precio y disponibilidad durante la confirmación.
 
 Docker Desktop Linux 29.9.2 y Supabase CLI 3.0.0 usaron el stack desechable ya migrado. Los recuentos finales fueron 4 categorías, 16 productos y cero usuarios, identidades, membresías o sesiones. Se detuvo el stack y se conservó el volumen. Las capturas de la regresión pública se produjeron solo en la copia aislada. Los primeros smoke detectaron y permitieron corregir el nombre accesible del contador y la jerarquía de encabezados. Tras una falla intermedia de resolución de dependencias, se repusieron dos archivos auxiliares que faltaban en la copia temporal y se repitieron check, lint y Vitest sobre el mismo código.
+
+## Verificación final de la corrección aprobada
+
+Sobre `d0aeb99` pasaron `npm.cmd run check` con cero diagnósticos, `npm.cmd run lint`, `npm.cmd run test` con **80/80** pruebas en diez archivos, `npm.cmd run seed:check`, `npm.cmd run build` y `npm.cmd run smoke` en Edge DEMO a 360/1440 px. Supabase local, pgTAP y Auth quedaron respaldados por la ejecución anterior de la implementación original. El cierre documental reutiliza la evidencia y conserva el patch revisado. [Checkpoint de continuidad](CP005_CHECKPOINT.md)

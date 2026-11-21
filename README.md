@@ -101,7 +101,7 @@ El orquestador aprobó la integración CP-003B: 4 categorías/16 productos/0 adm
 
 Localmente se activó únicamente PUBLIC_CATALOG_MODE=supabase en web/.env.local ignorado. No se suben entornos ni claves. Producción Netlify, aún sin configurar/publicar desde esta tarea, requiere exactamente PUBLIC_CATALOG_MODE, PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_PUBLISHABLE_KEY en scope Builds/contexto Production; valores URL/key omitidos. Base web, comando npm run build y publish dist relativo a base. Las variables PUBLIC_* quedan en el bundle estático y requieren un build/deploy nuevo autorizado. No usar credenciales elevadas ni extender automáticamente valores productivos a previews. Ajustes reales del sitio UNKNOWN por falta de acceso Netlify. CP-004 no autorizado.
 
-## CP-004 — login y administración local, pendiente de revisión
+## CP-004 — login y administración con aprobación técnica local
 
 Implementación y evidencia en [docs/CP004_HANDOFF.md](docs/CP004_HANDOFF.md). `/admin` usa Supabase Auth real, verificación de membresía en PostgreSQL y CRUD de productos bajo RLS. El SDK mantiene Auth en memoria sin canal de eventos entre pestañas. La aplicación recupera la sesión al recargar con `sessionStorage` y Web Locks cuando están disponibles. Las copias se descartan si el documento original conserva el bloqueo. Una copia restaurada sin ese documento puede ser indistinguible de una recarga. Renovar el token conserva los borradores de la misma identidad. El catálogo público conserva su adaptador anónimo.
 
@@ -114,6 +114,8 @@ Para repetir la prueba de dos pestañas en Edge, ejecutar `npm.cmd run test:admi
 No se necesitan variables nuevas: solo las tres PUBLIC_* existentes. Mantener .env.local ignorado; nunca copiar claves/tokens a Git. Auditoría productiva histórica: 0 vulnerabilidades; auditoría completa histórica: 10 moderadas preexistentes en tooling de lint, pendientes de mantenimiento separado.
 
 ## CP-005 — carrito y pedido DEMO
+
+CP-005 recibió aprobación técnica en LOCAL el 21 de noviembre de 2026 sobre `d0aeb99efd964775fe59164f7416d378ba24b01a`. La integración en GitHub y la publicación en Netlify están pendientes de autorización separada. [Checkpoint de continuidad](docs/CP005_CHECKPOINT.md)
 
 Agrega productos desde el catálogo o la ficha. El contador del encabezado enlaza a `/carrito`, donde puedes revisar cantidades y existencias, quitar líneas o vaciar la selección con confirmación. El navegador guarda únicamente SKU y cantidad. Si el catálogo cambia, ajusta o retira las piezas afectadas. Una falla de catálogo conserva lo seleccionado y permite reintentar.
 

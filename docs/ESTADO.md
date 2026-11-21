@@ -2,7 +2,7 @@
 
 **Última actualización:** 2026-11-21
 
-**Estado general:** CP-002/CP-003A/CP-003B APPROVED e integrados en main. CP-004 APPROVED técnicamente en LOCAL el 21 de noviembre de 2026. Integración a main, migración RPC remota y publicación pendientes. Detalle en [CP004_HANDOFF.md](CP004_HANDOFF.md).
+**Estado general:** CP-002/CP-003A/CP-003B APPROVED e integrados en main. CP-004 y CP-005 APPROVED técnicamente en LOCAL el 21 de noviembre de 2026. Integración a main y publicación pendientes. La aplicación remota de la RPC de CP-004 requiere autorización separada. [Checkpoint de continuidad](CP005_CHECKPOINT.md)
 
 **Pendientes CP-004:** autorización independiente para integración a main, operaciones remotas y publicación. La auditoría histórica incluyó diez hallazgos moderados de tooling y cero en dependencias de producción.
 
@@ -12,7 +12,7 @@
 | CP-002 | **APPROVED / CERRADO** | Codex; aprobación del orquestador comunicada por usuario | Astro local, 16 productos, catálogo/ficha; 14 tests y smoke en Edge; cierre documental |
 | CP-003 | CP-003A/CP-003B **APPROVED** | Codex; aprobación externa comunicada por usuario | 53/53 pgTAP local; migración/seed remotos y frontend local aprobados; cierre documental |
 | CP-004 | **APPROVED técnicamente en LOCAL · 2026-11-21** | Orquestador externo | 69/69 pgTAP, smoke GoTrue/REST real y limpieza verificada sobre `7488efe` |
-| CP-005 | LOCAL PASS / REVIEW | Codex | Carrito y pedido DEMO, smoke Edge y Supabase local |
+| CP-005 | **APPROVED técnicamente en LOCAL · 2026-11-21** | Orquestador externo | `d0aeb99`, frontend 80/80 y smoke Edge DEMO. Evidencia Supabase local anterior |
 | CP-006 | WAITING | Codex | Espera GitHub/Netlify |
 | CP-007 | OPTIONAL | Codex | Reparaciones fuera del MVP |
 
@@ -199,3 +199,10 @@ Todos los comandos npm desde `web/`, con `npm.cmd` por la política PowerShell d
 
 - `cart-store.ts` compara la cantidad de la línea que `CartPage.tsx` mostró antes de quitarla. La regresión en `cart.test.ts` usa dos stores con el mismo storage y comprueba que una eliminación obsoleta conserva la selección más reciente. El estado vigente de CP-004 en esta bitácora y PROJECT registra la aprobación técnica en LOCAL del 21 de noviembre de 2026.
 - En copia aislada, `npm.cmd run check` **PASS** (49 archivos, cero diagnósticos), `npm.cmd run lint` **PASS**, `npm.cmd run test` **PASS** (80/80 en diez archivos), `npm.cmd run seed:check` **PASS**, `npm.cmd run build` **PASS** (ocho rutas) y `npm.cmd run smoke` **PASS** en Edge DEMO a 360/1440 px. La evidencia previa de Supabase, SQL y Auth corresponde a la validación anterior.
+
+### 2026-11-21 — CP-005 / APPROVED TÉCNICAMENTE EN LOCAL — CIERRE
+
+- Aprobación independiente comunicada por el usuario. En `cp-005-cart-checkout`, el commit inicial `ef8b3d4d207706bbbedb246cef823d88f5581a54` parte de CP-004 `7488efe00959e233d25234c409eafe112ef7073d`. La corrección aprobada `d0aeb99efd964775fe59164f7416d378ba24b01a` bloqueó eliminaciones obsoletas entre pestañas y corrigió el estado documental de CP-004.
+- Evidencia ya ejecutada: 79/79 en la implementación original y 80/80 tras la corrección. Type check, lint, consistencia del seed, build y smoke Edge DEMO a 360/1440 px **PASS** sobre la corrección. El recorrido con Supabase local, 69/69 pgTAP, Auth y limpieza de fixtures corresponden a la ejecución original de CP-005.
+- Cierre documental con revisión de diff y `git diff --check`. Se conservó la implementación aprobada y el `CP005_REVIEW.patch` sin seguimiento. Sin Web Locks, las escrituras estrictamente simultáneas siguen siendo de mejor esfuerzo. La demo no crea pedidos reales, pagos ni registros de entrega.
+- Integrar CP-004 antes de CP-005 en GitHub tras la autorización del usuario. La publicación en Netlify y las operaciones remotas requieren autorización por separado. CP-006 sigue pendiente. [CP005_CHECKPOINT.md](CP005_CHECKPOINT.md)
