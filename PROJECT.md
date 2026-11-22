@@ -10,7 +10,7 @@
 
 1. Leer `AGENTS.md` antes de desarrollar; después este `PROJECT.md` y `docs/ESTADO.md`.
 2. Para tareas manuales externas, leer `REQUISITOS_EXTERNOS.md`. NO inventar cuentas, credenciales ni accesos.
-3. Usar `docs/CODEX_START.md` como referencia histórica de prompts. CP-002 está APPROVED. El usuario autorizó CP-005 local desde el commit verificado de CP-004 y reservó publicación, operaciones remotas y CP-006 para revisiones posteriores.
+3. Usar `docs/CODEX_START.md` como referencia histórica de prompts. El usuario autorizó CP-006 exclusivamente para preparación y validación local desde el cierre de CP-005. La integración, las operaciones remotas y la publicación requieren autorización separada.
 4. La estructura de referencia funcional es https://www.dipmecatronica.com (búsqueda, categorías, productos, carrito), **no** una licencia para copiar su HTML, textos, logo, imágenes o bases de datos. Rediseñar con identidad Electro Shop.
 5. Paleta orientativa recuperada del prototipo: `#121214` carbón, `#a855f7` violeta, blanco y grises. Rescatar únicamente la paleta y el concepto visual; **no** llevar el `index_elec.html` al código productivo.
 6. **Stack operativo para el MVP:** Astro (sitio estático) + islas React + TypeScript estricto + Tailwind compilado + Vitest y/o herramientas de test adecuadas; Git/GitHub; Netlify Free; Supabase PostgreSQL + Auth y RLS. Firebase Firestore **solo alternativa si el equipo cambia esta decisión**. No implementar ambos.
@@ -123,7 +123,9 @@ Autorización local comunicada por el usuario en el prompt CP-004: rama cp-004-a
 
 **Aceptar si:** carrito respeta SKU/id y no duplica por error, precio en centavos no pierde precisión, total se recalcula, funciona en móvil, cero integraciones de cobro y pruebas pasan.
 
-### CP-006 — Netlify y demostración pública **(ESPERAR APROBACIÓN)**
+### CP-006 — Netlify y demostración pública **(PREPARACIÓN LOCAL / REVISIÓN INDEPENDIENTE)**
+
+La rama `cp-006-release-prep` parte del cierre CP-005 `8f4bda41a1b96218b8f26f17680228c4d9cfa427`. El `netlify.toml` prepara el artefacto estático con Node 24. CP-004 y CP-005 ya se enviaron a GitHub y siguen pendientes de integración en `main`. El release y el smoke público quedan **BLOCKED_EXTERNAL** hasta autorización. [Checklist de release](docs/CP006_RELEASE_CHECKLIST.md) · [Handoff CP-006](docs/CP006_HANDOFF.md)
 **Antes:** usuario conecta repo GitHub a Netlify Free; define subdominio y variables de entorno de Supabase (publicables); si hay OAuth/redirecciones, configura URL en Supabase. Codex no debe asumir acceso externo ni realizar cambios de facturación.
 
 **Implementar Codex:** `netlify.toml` con base `web`, build `npm run build`, publish `dist` (verificar en deploy); README de despliegue y variables; revisar build local, enlaces, accesibilidad y responsividad, errores en consola, permisos RLS, HTTPS, SEO mínimo y ausencia de secretos; generar checklist de demo universitaria.
@@ -168,7 +170,7 @@ Protocolo de revisión: el usuario comparte enlace a PR, diff, árbol de archivo
 | CP-003 | Supabase SQL, RLS y catálogo persistente | **CP-003A/CP-003B APPROVED; catálogo remoto y frontend local verificados** | Netlify y CP-004 requieren autorización posterior |
 | CP-004 | Login real + CRUD admin | **APPROVED técnicamente en LOCAL · 2026-11-21** | Integración a main, RPC remota, identidad/admin controlados y publicación pendientes |
 | CP-005 | Carrito/pedido simulado | **APPROVED técnicamente en LOCAL · 2026-11-21** | Integración GitHub después de CP-004 y publicación bajo autorización separada |
-| CP-006 | Netlify y demo pública | **Pendiente** | GitHub + Netlify |
+| CP-006 | Netlify y demo pública | **Preparación local en revisión** | Integración, publicación y verificación pública bajo autorización separada |
 | CP-007 | Reparaciones | **Opcional / pospuesto** | Por definir |
 
 **Histórico completo y motivación:** revisar `docs/historico/PROJECT_pre_orquestacion_2026-10-26.md`. **Preparación externa:** `REQUISITOS_EXTERNOS.md`. **Primera instrucción para Codex:** `docs/CODEX_START.md`.

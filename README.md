@@ -122,3 +122,23 @@ Agrega productos desde el catálogo o la ficha. El contador del encabezado enlaz
 En `/checkout`, elige recoger en tienda sin cargo o envío estándar simulado de $99.00 MXN. Usa datos ficticios. El formulario y el comprobante temporal viven en memoria. Confirma el pedido DEMO después de revisar el total. Antes de confirmar se consulta de nuevo el catálogo. Si cambió el precio o bajó el stock, el flujo pide una nueva revisión. Al completar se vacía el carrito. La referencia DEMO se genera en el navegador y desaparece al recargar.
 
 Para repetir el recorrido a 360 y 1440 px, ejecuta `npm.cmd run build` y `npm.cmd run smoke` desde `web` en una copia de prueba sin credenciales reales. Para Supabase, construye esa copia con los valores públicos del stack desechable en loopback y ejecuta `npm.cmd run smoke -- --supabase-local`. El detalle y los resultados están en el handoff. [CP005_HANDOFF.md](docs/CP005_HANDOFF.md)
+
+## CP-006 — preparar y comprobar el artefacto local
+
+Usa Node 24 y ejecuta desde `web` en PowerShell. Instala con `npm.cmd ci` si la copia carece de dependencias. Trabaja en una copia de prueba sin un `.env.local` que apunte a producción. En modo DEMO basta con seleccionar ese modo.
+
+```powershell
+$env:PUBLIC_CATALOG_MODE = 'demo'
+npm.cmd run check
+npm.cmd run lint
+npm.cmd test
+npm.cmd run seed:check
+npm.cmd run build
+npm.cmd run smoke -- --no-screenshots
+```
+
+El smoke ejecuta Edge sobre `web/dist` en el puerto local 4322. `--no-screenshots` conserva las capturas históricas. Para revisar manualmente el build, usa `npm.cmd run preview -- --host 127.0.0.1` y abre la URL local indicada. Recarga las rutas desde su URL directa, incluida la ficha con `?sku=ES-D001`.
+
+Para probar Supabase real, usa un stack desechable en loopback con ambas migraciones aplicadas. Configura `PUBLIC_CATALOG_MODE=supabase`, `PUBLIC_SUPABASE_URL` y `PUBLIC_SUPABASE_PUBLISHABLE_KEY` en el proceso local o en `.env.local` ignorado. La clave debe corresponder al proyecto local de prueba. Construye de nuevo y ejecuta `npm.cmd run smoke -- --supabase-local --no-screenshots`. Para comprobar el admin, usa los runners indicados en el handoff.
+
+El `netlify.toml` raíz prepara base `web`, `npm run build`, salida `dist` relativa a la base y Node 24. La configuración y las pruebas de este checkpoint son locales. El orden de integración, los controles de automatización y la validación futura del sitio se detallan en la lista de publicación. [Checklist de release](docs/CP006_RELEASE_CHECKLIST.md) · [Handoff CP-006](docs/CP006_HANDOFF.md)

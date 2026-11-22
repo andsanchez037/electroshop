@@ -10,6 +10,8 @@ import { exerciseShopping } from './shopping-smoke.mjs';
 // Servidor estático exclusivo del test. No despliega ni contacta servicios externos.
 const root = resolve('dist');
 const localSupabase = process.argv.includes('--supabase-local');
+const screenshots = !process.argv.includes('--no-screenshots');
+const site = 'http://127.0.0.1:4322';
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const server = createServer(async (request, response) => {
   try {
@@ -30,14 +32,16 @@ try {
   browser = await chromium.launch({ channel: 'msedge', headless: true });
   const page = await browser.newPage();
   const errors = [];
+  let outside = 0;
   await page.route('**/*', route => {
     const url = new globalThis.URL(route.request().url());
-    const allowed = url.origin === 'http://127.0.0.1:4322' ||
+    const allowed = url.origin === site ||
       (localSupabase && url.origin === 'http://127.0.0.1:54321' && url.pathname === '/rest/v1/products');
+    if (!allowed) outside++;
     return allowed ? route.continue() : route.abort();
   });
   page.on('pageerror', error => errors.push(error.message));
-  await mkdir('../docs/evidencia/CP-002', { recursive: true });
+  if (screenshots) await mkdir('../docs/evidencia/CP-002', { recursive: true });
   for (const width of [360, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     for (const [route, label] of [['/', 'inicio'], ['/catalogo', 'catalogo'], ['/producto?sku=ES-D001', 'producto'], ['/acerca', 'acerca']]) {
@@ -49,7 +53,7 @@ try {
       await page.addScriptTag({ content: axe.source });
       const violations = await page.evaluate(async () => (await globalThis.axe.run()).violations);
       assert.deepEqual(violations.map(item => ({ id: item.id, targets: item.nodes.map(node => node.target) })), [], `Accesibilidad ${label} ${width}`);
-      await page.screenshot({ path: `../docs/evidencia/CP-002/${label}-${width}.png`, fullPage: true });
+      if (screenshots) await page.screenshot({ path: `../docs/evidencia/CP-002/${label}-${width}.png`, fullPage: true });
     }
   }
   await page.goto('http://127.0.0.1:4322/');
@@ -75,12 +79,58 @@ try {
   await page.getByRole('heading', { name: 'Placa de desarrollo Nova' }).waitFor();
   await page.goto('http://127.0.0.1:4322/producto?sku=INVALIDO');
   await page.getByRole('heading', { name: 'Producto no encontrado' }).waitFor();
+  await exerciseReleaseRoutes(page, localSupabase);
   assert.equal((await page.goto('http://127.0.0.1:4322/no-existe')).status(), 404);
   await page.getByRole('heading', { name: 'Esta conexión no existe.' }).waitFor();
   assert.deepEqual(errors, [], 'Errores JS del navegador');
-  globalThis.console.log('PASS: 360/1440 px, 4 rutas, axe (incluye contraste), búsqueda, filtros, SKU, recarga, teclado, 404; sin errores JS. 8 capturas.');
-  await exerciseShopping(browser, 'http://127.0.0.1:4322', localSupabase);
+  assert.equal(outside, 0, 'Solicitudes fuera de los orígenes de prueba');
+  globalThis.console.log(`PASS: 360/1440 px, 4 rutas, axe, búsqueda, filtros, SKU, teclado, 404; sin errores JS.${screenshots ? ' 8 capturas.' : ''}`);
+  await exerciseShopping(browser, site, localSupabase);
 } finally {
   await browser?.close();
   await new Promise(done => server.close(done));
+}
+
+async function exerciseReleaseRoutes(page, localSupabase) {
+  const routes = [
+    ['/catalogo', () => page.getByText('16 de 16 productos'), false],
+    ['/producto?sku=ES-D001', () => page.getByRole('heading', { name: 'Placa de desarrollo Nova' }), false],
+    ['/carrito', () => page.getByRole('heading', { name: 'Tu carrito está vacío' }), true],
+    ['/checkout', () => page.getByRole('heading', { name: 'Tu carrito está vacío' }), true],
+    ['/admin', () => page.getByRole('heading', { name: localSupabase ? 'Iniciar sesión' : 'No pudimos verificar la administración' }), true],
+  ];
+  let consoleErrors = 0;
+  const onConsole = message => { if (message.type() === 'error') consoleErrors++; };
+  page.on('console', onConsole);
+  try {
+    for (const width of [360, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const [route, ready, noIndex] of routes) {
+        assert.equal((await page.goto(site + route))?.status(), 200);
+        await ready().waitFor();
+        assert.equal((await page.reload())?.status(), 200);
+        await ready().waitFor();
+        assert.equal(new globalThis.URL(page.url()).search, new globalThis.URL(site + route).search);
+        assert.match(await page.title(), /Electro Shop/);
+        assert.ok(await page.locator('meta[name="description"]').getAttribute('content'));
+        assert.ok(await page.locator('meta[property="og:title"]').getAttribute('content'));
+        assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'), '/favicon.svg');
+        assert.equal(await page.locator('meta[name="robots"][content*="noindex"]').count(), Number(noIndex));
+        assert.ok(await page.evaluate(() => globalThis.document.documentElement.scrollWidth <= globalThis.innerWidth), route);
+        assert.equal(await page.getByRole('button', { name: 'Confirmar pedido DEMO' }).count(), 0);
+        assert.equal(await page.getByRole('button', { name: 'Nuevo producto' }).count(), 0);
+        if (noIndex) {
+          await page.addScriptTag({ content: axe.source });
+          assert.deepEqual(await page.evaluate(async () => (await globalThis.axe.run()).violations.map(item => item.id)), [], route);
+        }
+      }
+    }
+    const favicon = await page.request.get(site + '/favicon.svg');
+    assert.equal(favicon.status(), 200);
+    assert.match(favicon.headers()['content-type'] ?? '', /image\/svg\+xml/);
+    assert.equal(consoleErrors, 0, 'Errores de consola en carga y recarga');
+    globalThis.console.log('PASS: carga y recarga de catálogo, SKU, carrito, checkout y admin a 360/1440 px; metadatos, favicon y consola.');
+  } finally {
+    page.off('console', onConsole);
+  }
 }
