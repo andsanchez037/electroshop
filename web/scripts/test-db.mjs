@@ -6,7 +6,7 @@ import { completeSummary, completeTap, isLocalDocker } from './db-test-results.m
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const run = (name, args, input) => spawnSync(name, args, {
-  encoding: 'utf8', windowsHide: true, stdio: 'pipe', timeout: 120000,
+  encoding: 'utf8', windowsHide: true, stdio: 'pipe', timeout: 120000, cwd: root,
   maxBuffer: 4 * 1024 * 1024, input,
 });
 const stop = (message, code) => { globalThis.console.error(message); process.exit(code); };
@@ -24,14 +24,17 @@ if (context.status !== 0 || !isLocalDocker(endpoint)) {
 }
 const engine = run('docker', ['version', '--format', '{{.Server.Os}}']);
 if (engine.status !== 0 || engine.stdout.trim() !== 'linux') stop('BLOCKED_EXTERNAL: motor Docker Linux local no disponible.', 2);
+// Archivos/recuentos fijos; no aceptar destinos o planes desde argumentos externos.
+for (const [file, count] of [['catalog_rls.test.sql', 53], ['admin_access.test.sql', 16]]) {
 // CLI 3 eliminó --local: sin --remote el destino es exclusivamente local.
-const result = run('supabase', ['test', 'db', ...(major === 2 ? ['--local'] : []), '--workdir', root]);
+const result = run('supabase', ['test', 'db', `supabase/tests/database/${file}`, ...(major === 2 ? ['--local'] : []), '--workdir', root]);
 const output = (result.stdout ?? '') + (result.stderr ?? '');
-if (result.status !== 0 || !completeSummary(output)) {
-  stop('FAIL: pg_prove local no acredita exactamente 53 tests PASS sin omisiones. No se imprime salida potencialmente sensible.', 1);
+if (result.status !== 0 || !completeSummary(output, count)) {
+  stop(`FAIL: ${file} no acredita exactamente ${count} tests PASS sin omisiones. Salida sensible omitida.`, 1);
 }
 // pg_prove oculta el TAP: reejecutar la transacción para verificar cada número.
-const sql = readFileSync(new URL('../../supabase/tests/database/catalog_rls.test.sql', import.meta.url), 'utf8');
+const sql = readFileSync(new URL(`../../supabase/tests/database/${file}`, import.meta.url), 'utf8');
 const tap = run('docker', ['exec', '-i', 'supabase_db_electroshop-local', 'psql', '-XAt', '-v', 'ON_ERROR_STOP=1', '-U', 'postgres', '-d', 'postgres'], sql);
-if (tap.status !== 0 || !completeTap(tap.stdout ?? '')) stop('FAIL: TAP local incompleto, fallido u omitido; se requieren 53/53.', 1);
-globalThis.console.log('PASS: pg_prove 53/53 y TAP independiente 53/53; cero fallos, SKIP o TODO. Solo Supabase local.');
+if (tap.status !== 0 || !completeTap(tap.stdout ?? '', count)) stop(`FAIL: TAP ${file} incompleto; se requieren ${count}/${count}.`, 1);
+globalThis.console.log(`PASS: ${file} ${count}/${count} en pg_prove y TAP independiente; sin fallos, SKIP o TODO. Solo local.`);
+}
