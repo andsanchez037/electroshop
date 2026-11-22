@@ -1,7 +1,8 @@
 import { categories, formatPrice, productUrl, type Product } from '../data/catalog';
 import ProductArt from './ProductArt';
+import { AddToCart } from './cart/CartControls';
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, purchasable = false }: { product: Product; purchasable?: boolean }) {
   return <article className="product-card">
     <a href={productUrl(product.sku)} className="product-link">
       <ProductArt category={product.category} />
@@ -14,5 +15,6 @@ export default function ProductCard({ product }: { product: Product }) {
         <span className="card-detail">Ver producto <span aria-hidden="true">→</span></span>
       </div>
     </a>
+    {purchasable && <AddToCart product={product} compact />}
   </article>;
 }

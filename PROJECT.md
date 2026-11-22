@@ -1,6 +1,6 @@
 # Electro Shop — PROJECT.md (fuente de verdad para Codex)
 
-**Actualización:** 21 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-004 en segunda revisión tras las correcciones locales de sesión. RPC remota y publicación pendientes.
+**Actualización:** 21 de noviembre de 2026 · **Estado:** CP-003A/CP-003B APPROVED e integrados en main. CP-004 y CP-005 APPROVED técnicamente en LOCAL el 21 de noviembre de 2026. La integración a main y la publicación de ambos checkpoints están pendientes. La RPC de CP-004 requiere autorización para aplicarse en remoto.
 
 **Propósito:** prototipo universitario **no comercial** de un catálogo de electrónica con administración segura.
 
@@ -10,11 +10,11 @@
 
 1. Leer `AGENTS.md` antes de desarrollar; después este `PROJECT.md` y `docs/ESTADO.md`.
 2. Para tareas manuales externas, leer `REQUISITOS_EXTERNOS.md`. NO inventar cuentas, credenciales ni accesos.
-3. Usar `docs/CODEX_START.md` como referencia de los prompts por fase. CP-002 está APPROVED; no volver a ejecutarlo. El usuario autorizó CP-004 completo solo local (código/tests/commit), sin escrituras remotas, push, PR, merge ni deploy. No iniciar CP-005.
+3. Usar `docs/CODEX_START.md` como referencia histórica de prompts. CP-002 está APPROVED. El usuario autorizó CP-005 local desde el commit verificado de CP-004 y reservó publicación, operaciones remotas y CP-006 para revisiones posteriores.
 4. La estructura de referencia funcional es https://www.dipmecatronica.com (búsqueda, categorías, productos, carrito), **no** una licencia para copiar su HTML, textos, logo, imágenes o bases de datos. Rediseñar con identidad Electro Shop.
 5. Paleta orientativa recuperada del prototipo: `#121214` carbón, `#a855f7` violeta, blanco y grises. Rescatar únicamente la paleta y el concepto visual; **no** llevar el `index_elec.html` al código productivo.
 6. **Stack operativo para el MVP:** Astro (sitio estático) + islas React + TypeScript estricto + Tailwind compilado + Vitest y/o herramientas de test adecuadas; Git/GitHub; Netlify Free; Supabase PostgreSQL + Auth y RLS. Firebase Firestore **solo alternativa si el equipo cambia esta decisión**. No implementar ambos.
-7. **Situación vigente:** CP-002/CP-003A/CP-003B aprobados e integrados. CP-004 local está en revisión: login/CRUD bajo RLS y RPC de consulta de membresía preparada. Publicación storefront reportada operativa por el usuario; no verificada/desplegada en esta tarea. Nuevas escrituras remotas, admins o despliegue CP-004 requieren aprobación separada. Ver `docs/CP004_HANDOFF.md`.
+7. **Situación vigente:** CP-002/CP-003A/CP-003B aprobados e integrados. CP-004 y CP-005 tienen aprobación técnica local. La integración en GitHub, las escrituras remotas, las cuentas admin y la publicación requieren autorización separada. La continuidad del proyecto se documenta en `docs/CP005_CHECKPOINT.md`.
 8. Evitar sobreingeniería: no FastAPI, pagos, integraciones ERP, e-mail transaccional, inventario real, envío real, scraping, funciones serverless ni Microservicios en la primera entrega.
 9. Toda acción simulada se rotula `DEMO / NO ES UNA COMPRA REAL`; jamás usar datos reales de clientes, pedidos o teléfonos sin revisión.
 10. **Pausar entre checkpoints:** al terminar cada CP, actualizar `docs/ESTADO.md`, publicar resultados verificables y esperar revisión. No iniciar la siguiente fase automáticamente.
@@ -110,15 +110,16 @@ Los requisitos siguientes se conservan como referencia del alcance aprobado:
 
 **Aceptar si:** catálogo lee registros persistentes de Supabase; anon no escribe productos, user normal no escribe, admin autenticado sí; no se publican secretos; migraciones/seeds versionadas e idempotencia cuando sea factible; `npm run build` y tests verdes. Bloquear aprobación si faltan pruebas de autorización.
 
-### CP-004 — Login real y CRUD admin **(LOCAL IMPLEMENTADO / EN REVISIÓN)**
+### CP-004 — Login real y CRUD admin **(APPROVED TÉCNICAMENTE EN LOCAL · 21 DE NOVIEMBRE DE 2026)**
 
 Autorización local comunicada por el usuario en el prompt CP-004: rama cp-004-admin desde main 7baab160b3b020d89c1d6dcb36126ae63b4c5390. Login/logout con el SDK oficial, Auth en memoria sin difusión entre pestañas y recuperación al recargar con `sessionStorage` y Web Locks. Una copia de sesión sin el documento original activo puede ser indistinguible de una recarga. Los eventos de la misma identidad conservan los borradores. La UI de listado/alta/edición/visibilidad/borrado confirmado depende de permisos de PostgreSQL, sin registro ni autoasignación. RPC booleana SECURITY INVOKER aplicada durante la validación histórica local; tablas y RLS CP-003A conservadas. El registro histórico incluye 53+16 pgTAP locales y smoke Auth/CRUD real local. La evidencia actual y los pasos pendientes están en `docs/CP004_HANDOFF.md`. Commit exclusivamente local.
 **Implementar Codex:** Supabase Auth con login/logout, sesión y estados; panel admin para crear/editar/desactivar productos; validación frontend y constraints backend; carga, paginación básica si aplica y mensajes de éxito/error accesibles. No permitir registro libre como administrador ni mostrar datos privados. El archivo `index_elec.html` no participa de la implementación.
 
 **Aceptar si:** invitado/cliente normal no puede realizar CREATE/UPDATE/DELETE ni llamando directamente a API; admin autorizado sí. Demostrar con pruebas automáticas RLS + manuales o reportar bloqueos. Nunca confiar en una ruta oculta como seguridad.
 
-### CP-005 — Carrito y pedido simulado **(ESPERAR APROBACIÓN)**
-**Implementar Codex:** agregar/editar/eliminar líneas, cantidades válidas, resumen MXN, persistencia local (`localStorage`) con manejo seguro, estado vacío y confirmación marcada **`DEMO: no se procesó compra ni pago`**. No persistir solicitudes anónimas en base de datos sin diseño anti-spam y aprobación. Fotos únicamente autorizadas.
+### CP-005 — Carrito y pedido simulado **(APPROVED TÉCNICAMENTE EN LOCAL · 21 DE NOVIEMBRE DE 2026)**
+
+`/carrito` comparte selección por SKU con catálogo, ficha y contador del encabezado. `/checkout` ofrece revisión, entrega o recogida y comprobante temporal. Se revalidan existencias y precios actuales vía el adaptador activo. Solo SKU/cantidad se guardan localmente. Los datos de entrega y el comprobante permanecen en memoria. La implementación aprobada es `d0aeb99efd964775fe59164f7416d378ba24b01a`. [Handoff de CP-005](docs/CP005_HANDOFF.md) · [Checkpoint de continuidad](docs/CP005_CHECKPOINT.md)
 
 **Aceptar si:** carrito respeta SKU/id y no duplica por error, precio en centavos no pierde precisión, total se recalcula, funciona en móvil, cero integraciones de cobro y pruebas pasan.
 
@@ -160,13 +161,13 @@ Protocolo de revisión: el usuario comparte enlace a PR, diff, árbol de archivo
 
 ## 7. Registro de checkpoints y estado actual
 
-| CP | Entrega | Estado 26/10/2026 | Dependencia externa |
+| CP | Entrega | Estado al 21/11/2026 | Dependencia externa |
 |---|---|---|---|
 | CP-001 | Vibecode HTML original | **Archivado** | Ninguna |
 | CP-002 | Astro + home + catálogo demo | **APPROVED / cerrado por aprobación comunicada por el usuario** | Ninguna pendiente para el cierre |
 | CP-003 | Supabase SQL, RLS y catálogo persistente | **CP-003A/CP-003B APPROVED; catálogo remoto y frontend local verificados** | Netlify y CP-004 requieren autorización posterior |
-| CP-004 | Login real + CRUD admin | **Implementación LOCAL en revisión** | Aprobar RPC remota, identidad/admin controlados y publicación por separado |
-| CP-005 | Carrito/pedido simulado | **Pendiente** | Ninguna adicional |
+| CP-004 | Login real + CRUD admin | **APPROVED técnicamente en LOCAL · 2026-11-21** | Integración a main, RPC remota, identidad/admin controlados y publicación pendientes |
+| CP-005 | Carrito/pedido simulado | **APPROVED técnicamente en LOCAL · 2026-11-21** | Integración GitHub después de CP-004 y publicación bajo autorización separada |
 | CP-006 | Netlify y demo pública | **Pendiente** | GitHub + Netlify |
 | CP-007 | Reparaciones | **Opcional / pospuesto** | Por definir |
 

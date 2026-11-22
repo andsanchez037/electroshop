@@ -42,7 +42,7 @@ export default function Catalog({ loader = loadProducts }: { loader?: () => Prom
       <div className="results-bar"><p role="status">{status === 'loading' ? 'Cargando catálogo…' : status === 'error' ? 'Catálogo no disponible' : `${filtered.length} de ${items.length} productos`}</p><span>Precios demo · MXN</span></div>
       {status === 'error' ? <div className="empty" role="alert"><h2>No pudimos cargar los productos</h2><p>Intenta cargar el catálogo otra vez.</p><button className="button" onClick={() => setAttempt(attempt + 1)}>Reintentar</button></div>
         : status === 'ready' && filtered.length === 0 ? <div className="empty"><h2>{items.length ? 'No encontramos coincidencias' : 'Aún no hay productos'}</h2><p>Prueba otro nombre, SKU o categoría.</p><button className="button secondary" onClick={clear}>Limpiar filtros</button></div>
-        : <div className="product-grid">{filtered.map(product => <ProductCard key={product.sku} product={product} />)}</div>}
+        : <div className="product-grid">{filtered.map(product => <ProductCard key={product.sku} product={product} purchasable />)}</div>}
     </section>
   </div>;
 }

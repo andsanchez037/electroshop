@@ -55,7 +55,7 @@ export function createCatalogSource(env: CatalogEnvironment, request: typeof fet
       let response: Response;
       try {
         response = await request(endpoint.toString(), { headers: { apikey: key, Accept: 'application/json', Prefer: 'count=exact' },
-          credentials: 'omit', signal: AbortSignal.timeout(10000), redirect: 'error' });
+          credentials: 'omit', cache: 'no-store', signal: AbortSignal.timeout(10000), redirect: 'error' });
       } catch { throw new Error('No se pudo conectar con el catálogo. Intenta de nuevo.'); }
       // Nunca reenviar body/URL/headers al log o UI; podrían contener información sensible.
       if (!response.ok) throw new Error('No se pudo consultar el catálogo. Revisa la conexión y los permisos.');

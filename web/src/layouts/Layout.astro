@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+import '../styles/shopping.css';
+import { CartLink } from '../components/cart/CartControls';
 interface Props { title: string; description: string }
 const { title, description } = Astro.props;
 const path = Astro.url.pathname;
@@ -10,7 +12,7 @@ const path = Astro.url.pathname;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    {path.startsWith('/admin') && <meta name="robots" content="noindex, nofollow" />}
+    {(path.startsWith('/admin') || path.startsWith('/checkout') || path.startsWith('/carrito')) && <meta name="robots" content="noindex, nofollow" />}
     <meta name="theme-color" content="#121214" />
     <meta property="og:title" content={`${title} | Electro Shop`} />
     <meta property="og:description" content={description} />
@@ -29,7 +31,7 @@ const path = Astro.url.pathname;
           <input id="site-search" type="search" name="q" placeholder="¿Qué vas a crear? Busca por nombre o SKU" />
           <button type="submit" aria-label="Buscar en el catálogo">↗</button>
         </form>
-        <span class="header-note">Ideas en marcha.<br /><strong>Electrónica para aprender.</strong></span>
+        <CartLink client:load current={path.startsWith('/carrito')} />
       </div>
       <nav class="container main-nav" aria-label="Navegación principal">
         <a href="/" aria-current={path === '/' ? 'page' : undefined}>Inicio</a>
